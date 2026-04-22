@@ -1,0 +1,2 @@
+# Kanjify
+Kanjify monorepo
