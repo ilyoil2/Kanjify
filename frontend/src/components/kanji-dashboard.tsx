@@ -1,11 +1,12 @@
-
-
 import { useState } from "react"
+import { Search, Sparkles } from "lucide-react"
 import { Navbar } from "@/components/navbar"
 import { KanjiInput } from "@/components/kanji-input"
 import { KanjiResult, type KanjiData } from "@/components/kanji-result"
 import { HistoryPage, type HistoryEntry } from "@/components/history-page"
 import { VocabularyPage } from "@/components/vocabulary-page"
+import { KanjiAnalyzerSidebar } from "@/components/kanji-analyzer-sidebar"
+import { Button } from "@/components/ui/button"
 
 // Mock data for demonstration - replace with actual API call
 const mockKanjiData: Record<string, KanjiData> = {
@@ -33,7 +34,7 @@ const mockKanjiData: Record<string, KanjiData> = {
     kanji: "学",
     meaning: "study; learning",
     onReading: "ガク",
-    kunReading: "まな.ぶ",
+    kunReading: "まな.부",
     radical: "子",
     radicalMeaning: "child",
     strokeCount: 8,
@@ -43,7 +44,7 @@ const mockKanjiData: Record<string, KanjiData> = {
     kanji: "日",
     meaning: "day; sun; Japan",
     onReading: "ニチ, ジツ",
-    kunReading: "ひ, -び, -か",
+    kunReading: "ひ, -비, -か",
     radical: "日",
     radicalMeaning: "sun",
     strokeCount: 4,
@@ -53,7 +54,7 @@ const mockKanjiData: Record<string, KanjiData> = {
     kanji: "本",
     meaning: "book; origin; main",
     onReading: "ホン",
-    kunReading: "もと",
+    kunReading: "도",
     radical: "木",
     radicalMeaning: "tree",
     strokeCount: 5,
@@ -63,7 +64,7 @@ const mockKanjiData: Record<string, KanjiData> = {
     kanji: "語",
     meaning: "language; word",
     onReading: "ゴ",
-    kunReading: "かた.る, かた.らう",
+    kunReading: "か타.る, 카타.らう",
     radical: "言",
     radicalMeaning: "speech",
     strokeCount: 14,
@@ -71,19 +72,13 @@ const mockKanjiData: Record<string, KanjiData> = {
   },
 }
 
-// Generate combined kanji data for multi-character input
 function getKanjiAnalysis(input: string): KanjiData | null {
-  // For single character, return mock data if available
   if (input.length === 1 && mockKanjiData[input]) {
     return mockKanjiData[input]
   }
-
-  // For multi-character input, create combined analysis
   const chars = input.split("")
   const knownChars = chars.filter((c) => mockKanjiData[c])
-
   if (knownChars.length === 0) {
-    // Return placeholder for unknown kanji
     return {
       kanji: input,
       meaning: "Meaning not found",
@@ -95,12 +90,9 @@ function getKanjiAnalysis(input: string): KanjiData | null {
       jlptLevel: "N/A",
     }
   }
-
-  // Combine meanings of known characters
   const meanings = knownChars
     .map((c) => mockKanjiData[c].meaning.split(";")[0].trim())
     .join(" + ")
-
   return {
     kanji: input,
     meaning: meanings,
@@ -123,18 +115,14 @@ export default function KanjiDashboard() {
   const [kanjiResult, setKanjiResult] = useState<KanjiData | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [history, setHistory] = useState<HistoryEntry[]>([])
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
   const handleKanjiSubmit = async (kanji: string) => {
     setIsLoading(true)
-
-    // Simulate API delay
     await new Promise((resolve) => setTimeout(resolve, 500))
-
     const result = getKanjiAnalysis(kanji)
     setKanjiResult(result)
     setIsLoading(false)
-
-    // Add to history if result is valid
     if (result) {
       const newEntry: HistoryEntry = {
         ...result,
@@ -154,87 +142,87 @@ export default function KanjiDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative overflow-x-hidden">
       <Navbar activeTab={activeTab} onTabChange={setActiveTab} />
 
-      <main className="pt-24 pb-12 px-4 sm:px-6">
+      <main className="pt-24 pb-12 px-4 sm:px-6 transition-all duration-500">
         <div
-          className={`mx-auto space-y-6 transition-all duration-300 ease-in-out ${
+          className={`mx-auto space-y-6 transition-all duration-500 ease-in-out ${
             activeTab === "main" ? "max-w-2xl" : "max-w-4xl"
           }`}
         >
           {activeTab === "main" && (
             <>
-              {/* Header */}
               <div className="text-center space-y-2">
-                <h1 className="text-3xl font-bold text-foreground text-balance">
-                  Japanese Kanji Learning
+                <h1 className="text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl">
+                  Kanjify Analysis
                 </h1>
-                <p className="text-muted-foreground">
-                  Enter a Kanji word to analyze its meaning, readings, and radicals
+                <p className="text-lg text-muted-foreground max-w-lg mx-auto">
+                  Decode the beauty of Japanese characters with AI-powered insights.
                 </p>
               </div>
 
-              {/* Result Display (appears above input after submission) */}
               {kanjiResult && (
-                <div className="animate-in fade-in slide-in-from-top-4 duration-300">
+                <div className="animate-in fade-in slide-in-from-top-4 duration-500">
                   <KanjiResult data={kanjiResult} />
                 </div>
               )}
 
-              {/* Input Section */}
               <KanjiInput onSubmit={handleKanjiSubmit} isLoading={isLoading} />
 
-              {/* Empty state hint */}
               {!kanjiResult && (
-                <div className="text-center py-8">
-                  <p className="text-sm text-muted-foreground">
-                    Try entering: 漢字, 日本語, 学, or any kanji character
-                  </p>
+                <div className="text-center py-12">
+                  <div className="inline-flex items-center gap-2 px-4 py-2 bg-muted/50 rounded-full text-sm text-muted-foreground border">
+                    <Sparkles className="w-4 h-4 text-primary" />
+                    <span>Try: 漢字, 日本語, or 桜</span>
+                  </div>
                 </div>
               )}
             </>
           )}
 
           {activeTab === "history" && (
-            <>
-              {/* Header */}
+            <div className="space-y-6 animate-in fade-in duration-500">
               <div className="text-center space-y-2">
-                <h1 className="text-3xl font-bold text-foreground text-balance">
-                  Search History
-                </h1>
-                <p className="text-muted-foreground">
-                  Review your previously searched kanji characters
-                </p>
+                <h1 className="text-3xl font-bold text-foreground">Search History</h1>
+                <p className="text-muted-foreground">Your recent kanji explorations.</p>
               </div>
-
-              {/* History Table */}
               <HistoryPage
                 history={history}
                 onDeleteEntry={handleDeleteEntry}
                 onClearHistory={handleClearHistory}
               />
-            </>
+            </div>
           )}
 
           {activeTab === "vocabulary" && (
-            <>
-              {/* Header */}
+            <div className="space-y-6 animate-in fade-in duration-500">
               <div className="text-center space-y-2">
-                <h1 className="text-3xl font-bold text-foreground text-balance">
-                  Kanji Vocabulary
-                </h1>
-                <p className="text-muted-foreground">
-                  Browse vocabulary grouped by JLPT level
-                </p>
+                <h1 className="text-3xl font-bold text-foreground">JLPT Vocabulary</h1>
+                <p className="text-muted-foreground">Master kanji across all proficiency levels.</p>
               </div>
-
-              {/* Vocabulary Table */}
               <VocabularyPage />
-            </>
+            </div>
           )}
         </div>
       </main>
+
+      {/* Floating Toggle Button */}
+      {!isSidebarOpen && (
+        <div className="fixed right-8 top-1/2 -translate-y-1/2 z-40 animate-in fade-in zoom-in duration-300">
+          <Button
+            variant="default"
+            size="icon"
+            className="h-14 w-14 rounded-2xl shadow-2xl hover:scale-110 active:scale-95 transition-all bg-primary hover:bg-primary/90"
+            onClick={() => setIsSidebarOpen(true)}
+          >
+            <Sparkles className="h-6 w-6 text-primary-foreground" />
+          </Button>
+        </div>
+      )}
+
+      {/* Modern Sidebar (No Overlay) */}
+      <KanjiAnalyzerSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
     </div>
   )
 }
