@@ -10,7 +10,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-default-key')
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -86,8 +86,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # CORS configuration
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173", # Vite default port
-    "http://127.0.0.1:5173",
+    "http://localhost:3002",
+    "http://127.0.0.1:3002",
 ]
 
 # DRF configuration

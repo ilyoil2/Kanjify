@@ -4,8 +4,10 @@ import { Toaster } from "./components/ui/sonner"
 
 function App() {
   return (
-    <ThemeProvider defaultTheme="dark" storageKey="kanjify-theme">
-      <KanjiDashboard />
+    <ThemeProvider defaultTheme="light" storageKey="kanjify-theme">
+      <div className="min-h-screen bg-background text-foreground antialiased font-sans">
+        <KanjiDashboard />
+      </div>
       <Toaster position="bottom-right" richColors />
     </ThemeProvider>
   )
