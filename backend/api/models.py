@@ -14,13 +14,14 @@ class Vocabulary(models.Model):
         MASTERED = 'MASTERED', 'Mastered'
 
     kanji = models.CharField(max_length=100)
-    hiragana = models.CharField(max_length=200)
-    katakana = models.CharField(max_length=200, blank=True, null=True)
-    meaning = models.TextField()
+    reading = models.CharField(max_length=200, null=True, blank=True)
+    meaning_ko = models.TextField(null=True, blank=True)
+    meaning_en = models.TextField(null=True, blank=True)
     n_level = models.CharField(
         max_length=2,
         choices=NLevel.choices,
-        default=NLevel.N5
+        null=True,
+        blank=True,
     )
     memorize_status = models.CharField(
         max_length=20,
@@ -31,7 +32,7 @@ class Vocabulary(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.kanji} ({self.hiragana})"
+        return f"{self.kanji} ({self.reading})"
 
     class Meta:
         db_table = 'tbl_vocabulary'
