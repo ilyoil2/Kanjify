@@ -82,7 +82,7 @@ export default function KanjiDashboard() {
         {activeTab === "main" ? (
           <>
             {/* 좌측 사이드바: Blue & White */}
-            <aside className="w-64 border-r border-blue-50 bg-blue-50/20 hidden md:flex flex-col">
+            <aside className="w-60 border-r border-blue-50 bg-blue-50/20 hidden md:flex flex-col">
               <div className="p-5 border-b border-blue-50 bg-white flex items-center justify-between">
                 <div className="flex items-center gap-2 font-black text-[11px] uppercase tracking-widest text-blue-600">
                   <History className="w-4 h-4" /> History
@@ -133,7 +133,7 @@ export default function KanjiDashboard() {
             </aside>
 
             {/* 우측 메인 영역 */}
-            <main className="flex-1 overflow-y-auto bg-white p-6 lg:p-10">
+            <main className="flex-1 overflow-y-auto bg-white p-6 lg:py-10 lg:pl-10 lg:pr-40">
               <div className="max-w-4xl mx-auto space-y-10">
                 {/* Header */}
                 <div className="space-y-6">
