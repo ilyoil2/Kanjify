@@ -31,7 +31,7 @@ export function Navbar({ activeTab, onTabChange }: NavbarProps) {
               <button
                 key={tab.id}
                 onClick={() => onTabChange(tab.id)}
-                className={`rounded-md px-4 py-2 text-sm font-medium transition-all duration-200 ${
+                className={`w-28 rounded-md py-2 text-sm font-medium transition-all duration-200 text-center ${
                   activeTab === tab.id
                     ? "bg-card text-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground"

@@ -66,6 +66,14 @@ export default function KanjiDashboard() {
     }
   }
 
+  const deleteRecentSearch = (e: React.MouseEvent, word: string) => {
+    e.stopPropagation()
+    setRecentSearches(prev => prev.filter(r => r.word !== word))
+    if (currentResult?.word === word) {
+      setCurrentResult(null)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-white relative flex flex-col font-sans antialiased text-gray-900">
       <Navbar activeTab={activeTab} onTabChange={setActiveTab} />
@@ -74,41 +82,50 @@ export default function KanjiDashboard() {
         {activeTab === "main" ? (
           <>
             {/* 좌측 사이드바: Blue & White */}
-            <aside className="w-72 border-r border-blue-50 bg-blue-50/20 hidden md:flex flex-col">
+            <aside className="w-64 border-r border-blue-50 bg-blue-50/20 hidden md:flex flex-col">
               <div className="p-5 border-b border-blue-50 bg-white flex items-center justify-between">
                 <div className="flex items-center gap-2 font-black text-[11px] uppercase tracking-widest text-blue-600">
-                  <History className="w-4 h-4" /> Recent Analysis
+                  <History className="w-4 h-4" /> History
                 </div>
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-gray-400 hover:text-blue-600" onClick={() => setRecentSearches([])}>
-                  <Trash2 className="w-3.5 h-3.5" />
-                </Button>
               </div>
               <ScrollArea className="flex-1">
-                <div className="p-3 space-y-2.5">
+                <div className="p-3 space-y-2">
                   {recentSearches.map((res, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setCurrentResult(res)}
-                      className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all ${
-                        currentResult?.word === res.word 
-                          ? "bg-white border-blue-600 shadow-lg shadow-blue-600/10 scale-105" 
-                          : "bg-white/50 hover:bg-white border-transparent"
-                      }`}
-                    >
-                      <div className="flex flex-col items-start">
-                        <span className={`text-lg font-black tracking-tight ${currentResult?.word === res.word ? "text-blue-600" : "text-gray-700"}`}>
-                          {res.word}
-                        </span>
-                        <span className="text-[11px] font-bold text-gray-400">
-                          {res.wordMeaning}
-                        </span>
-                      </div>
-                      <ChevronRight className={`w-4 h-4 ${currentResult?.word === res.word ? "text-blue-600" : "text-gray-300"}`} />
-                    </button>
+                    <div key={i} className="group relative">
+                      <button
+                        onClick={() => setCurrentResult(res)}
+                        className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all ${
+                          currentResult?.word === res.word 
+                            ? "bg-white border-blue-600 shadow-lg shadow-blue-600/10 scale-[1.02]" 
+                            : "bg-white/50 hover:bg-white border-transparent hover:border-blue-200"
+                        }`}
+                      >
+                        <div className="flex flex-col items-start pr-6">
+                          <span className={`text-xl font-black tracking-tight ${currentResult?.word === res.word ? "text-blue-600" : "text-gray-700"}`}>
+                            {res.word}
+                          </span>
+                          <span className="text-[12px] font-bold text-gray-400">
+                            {res.wordMeaning}
+                          </span>
+                        </div>
+                      </button>
+                      <button 
+                        onClick={(e) => deleteRecentSearch(e, res.word)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-2 text-gray-300 hover:text-red-500 transition-all"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   ))}
                   {recentSearches.length === 0 && (
-                    <div className="text-center py-20 text-blue-200 text-xs font-bold uppercase tracking-widest">
-                      No Records
+                    <div className="flex flex-col items-center justify-center py-20 px-6 text-center space-y-3">
+                      <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center">
+                        <History className="w-5 h-5 text-blue-200" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest">No History</p>
+                        <p className="text-[11px] text-gray-400 leading-tight">분석한 단어들이<br/>이곳에 표시됩니다</p>
+                      </div>
                     </div>
                   )}
                 </div>
