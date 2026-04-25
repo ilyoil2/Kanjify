@@ -8,9 +8,9 @@ import { Checkbox } from "@/components/ui/checkbox"
 interface VocabularyItem {
   id: number
   kanji: string
-  hiragana: string
-  katakana: string | null
-  meaning: string
+  reading: string
+  meaning_ko: string
+  meaning_en: string
   n_level: string
   memorize_status: string
 }
@@ -30,12 +30,10 @@ export function VocabularyPage() {
     setIsLoading(true)
     try {
       // Fetch from our new Django API
-      // In a real app, you might want to filter by level on the backend
       const response = await fetch("http://localhost:8002/api/vocabulary/")
       if (!response.ok) throw new Error("Failed to fetch vocabulary")
       const data = await response.json()
       
-      // Filter by active level on client side for now, or you could add ?n_level=N5 to the URL
       const filteredData = data.filter((item: VocabularyItem) => item.n_level === activeLevel)
       setVocabularyList(filteredData)
     } catch (error) {
@@ -188,15 +186,10 @@ export function VocabularyPage() {
                 {!hideDetails && (
                   <>
                     <span className="text-sm text-muted-foreground shrink-0">
-                      {item.hiragana}
+                      {item.reading}
                     </span>
-                    {item.katakana && (
-                      <span className="text-xs text-muted-foreground/70 shrink-0">
-                        {item.katakana}
-                      </span>
-                    )}
                     <span className="text-sm text-foreground truncate ml-auto">
-                      {item.meaning}
+                      {item.meaning_ko || item.meaning_en}
                     </span>
                   </>
                 )}
