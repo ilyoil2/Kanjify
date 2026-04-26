@@ -36,3 +36,30 @@ class Vocabulary(models.Model):
 
     class Meta:
         db_table = 'tbl_vocabulary'
+
+class Word(models.Model):
+    input_text = models.CharField(max_length=255, unique=True)
+    meaning_ko = models.TextField(null=True, blank=True)
+    reading_hiragana = models.CharField(max_length=200, null=True, blank=True)
+    reading_katakana = models.CharField(max_length=200, null=True, blank=True)
+    result_data = models.JSONField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.input_text
+
+    class Meta:
+        db_table = 'tbl_word'
+
+class User(models.Model):
+    username = models.CharField(max_length=150, unique=True)
+    email = models.EmailField(unique=True)
+    password = models.CharField(max_length=128)
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_login = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return self.username
+
+    class Meta:
+        db_table = 'tbl_user'

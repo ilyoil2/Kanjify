@@ -11,18 +11,38 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 interface HistoryItem {
+  id: number // Using timestamp as a unique ID for local storage items
   word: string
   data: KanjiRecursiveData
   timestamp: number
 }
 
-export default function KanjiDashboard() {
+interface KanjiDashboardProps {
+  user: { username: string, email: string } | null
+  onLogout: () => void
+  currentPath: string
+  navigateTo: (path: string) => void
+}
+
+export default function KanjiDashboard({ user, onLogout, currentPath, navigateTo }: KanjiDashboardProps) {
   const [activeTab, setActiveTab] = useState("main")
   const [currentResult, setCurrentResult] = useState<{word: string, data: KanjiRecursiveData} | null>(null)
-  const [history, setHistory] = useState<HistoryItem[]>([])
+  const [history, setHistory] = useState<HistoryItem[]>([]) // Local storage history
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+
+  // URL 경로와 탭 상태 동기화
+  useEffect(() => {
+    if (currentPath === "/") setActiveTab("main")
+    else if (currentPath === "/history") setActiveTab("history")
+    else if (currentPath === "/vocabulary") setActiveTab("vocabulary")
+  }, [currentPath])
+
+  const handleTabChange = (tab: string) => {
+    const path = tab === "main" ? "/" : `/${tab}`
+    navigateTo(path)
+  }
 
   // 로컬 스토리지에서 히스토리 불러오기
   useEffect(() => {
@@ -36,7 +56,7 @@ export default function KanjiDashboard() {
     }
   }, [])
 
-  // 히스토리 저장
+  // 히스토리 로컬 스토리지에 저장
   useEffect(() => {
     localStorage.setItem("kanji_history", JSON.stringify(history))
   }, [history])
@@ -51,7 +71,7 @@ export default function KanjiDashboard() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ word }),
+        body: JSON.stringify({ word }), // Removed user email
       })
 
       if (!response.ok) {
@@ -66,11 +86,18 @@ export default function KanjiDashboard() {
 
       // 히스토리 업데이트 (중복 제거 및 최신순)
       setHistory(prev => {
+        const newEntry = {
+          id: Date.now(), // Using timestamp as unique ID for local storage items
+          word,
+          data, // Store the full data for the sidebar
+          timestamp: Date.now()
+        }
+        // Avoid adding exact duplicates immediately if it's already in the current view state
         const filtered = prev.filter(h => h.word !== word)
-        return [{ word, data, timestamp: Date.now() }, ...filtered].slice(0, 20)
+        return [newEntry, ...filtered].slice(0, 20)
       })
     } catch (err) {
-      setError(err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다.")
+      setError(err instanceof Error ? err.message : "알 수 오류가 발생했습니다.")
     } finally {
       setIsLoading(false)
     }
@@ -78,15 +105,22 @@ export default function KanjiDashboard() {
 
   const deleteHistoryEntry = (e: React.MouseEvent, word: string) => {
     e.stopPropagation()
+    // Local storage delete logic
     setHistory(prev => prev.filter(h => h.word !== word))
     if (currentResult?.word === word) {
       setCurrentResult(null)
     }
   }
 
+  const clearHistory = () => {
+    // Local storage clear logic
+    setHistory([])
+    setCurrentResult(null)
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 relative flex flex-col font-sans antialiased text-gray-900">
-      <Navbar activeTab={activeTab} onTabChange={setActiveTab} />
+      <Navbar activeTab={activeTab} onTabChange={handleTabChange} user={user} onLogout={onLogout} />
 
       <div className="flex-1 flex pt-16 h-[calc(100vh-64px)] overflow-hidden">
         {activeTab === "main" ? (
@@ -100,8 +134,8 @@ export default function KanjiDashboard() {
               </div>
               <ScrollArea className="flex-1">
                 <div className="p-4 space-y-3">
-                  {history.map((item, i) => (
-                    <div key={i} className="group relative">
+                  {history.map((item) => ( // Using item.id which is Date.now() for local key
+                    <div key={item.id} className="group relative"> 
                       <button
                         onClick={() => setCurrentResult({ word: item.word, data: item.data })}
                         className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all duration-300 ${
@@ -115,12 +149,13 @@ export default function KanjiDashboard() {
                             {item.word}
                           </span>
                           <span className={`text-[10px] font-bold uppercase tracking-wider ${currentResult?.word === item.word ? "text-blue-100" : "text-slate-400"}`}>
-                            {Object.keys(item.data.nodes).length} Nodes
+                            {/* Use item.data.nodes length for node count */}
+                            {item.data?.nodes ? Object.keys(item.data.nodes).length : 0} Nodes
                           </span>
                         </div>
                       </button>
                       <button 
-                        onClick={(e) => deleteHistoryEntry(e, item.word)}
+                        onClick={(e) => deleteHistoryEntry(e, item.word)} // Pass word for local filtering
                         className={`absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full transition-all ${
                           currentResult?.word === item.word ? "text-blue-200 hover:text-white hover:bg-blue-500" : "opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-500 hover:bg-red-50"
                         }`}
@@ -195,13 +230,17 @@ export default function KanjiDashboard() {
                          <p className="text-sm text-slate-600 font-medium">단어를 입력하여 한자의 깊은 구조와 유래를 확인하세요</p>
                        </div>
                        <div className="flex items-center justify-center gap-3">
-                         {["간단", "우울", "한자"].map(sample => (
+                         {[
+                           { label: "간단", value: "簡単" },
+                           { label: "우울", value: "憂鬱" },
+                           { label: "한자", value: "漢字" }
+                         ].map(sample => (
                            <button 
-                            key={sample}
-                            onClick={() => handleKanjiSubmit(sample)}
+                            key={sample.label}
+                            onClick={() => handleKanjiSubmit(sample.value)}
                             className="px-4 py-2 rounded-full bg-white border border-slate-100 text-xs font-bold text-blue-600 hover:border-blue-200 hover:shadow-md transition-all"
                            >
-                             #{sample}
+                             #{sample.label}
                            </button>
                          ))}
                        </div>
@@ -217,13 +256,15 @@ export default function KanjiDashboard() {
               {activeTab === "history" ? (
                 <HistoryPage 
                   history={history.map(h => ({ 
-                    id: h.timestamp, 
+                    id: h.id, // Use the actual ID from the backend
                     word: h.word, 
-                    meaning: h.data.nodes[h.word[0]]?.meaning || "분석 완료",
+                    // Use meaning_ko from the history item, or fallback if it's not there
+                    // Also, use data.word_info.meaning_ko if available from currentResult, otherwise fallback to h.meaning
+                    meaning: h.meaning || currentResult?.data.word_info?.meaning_ko || "분석 완료",
                     timestamp: new Date(h.timestamp).toLocaleString()
                   }))} 
-                  onDeleteEntry={() => {}} 
-                  onClearHistory={() => setHistory([])} 
+                  onDeleteEntry={() => {}} // Placeholder for backend delete
+                  onClearHistory={() => {}} // Placeholder for backend clear
                 />
               ) : <VocabularyPage />}
             </div>
@@ -238,7 +279,7 @@ export default function KanjiDashboard() {
           className="h-16 w-16 rounded-3xl shadow-2xl bg-blue-600 hover:bg-blue-700 hover:scale-110 active:scale-95 transition-all group"
           onClick={() => setIsSidebarOpen(true)}
         >
-          <Sparkles className="h-7 w-7 text-white group-hover:animate-spin-slow" />
+          <Sparkles className="h-7 w-7 text-white group-hover:animate-slow-spin" />
         </Button>
       </div>
 

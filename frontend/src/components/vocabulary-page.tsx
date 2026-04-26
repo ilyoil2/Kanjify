@@ -1,9 +1,8 @@
-
-
 import { useState, useEffect } from "react"
-import { ChevronLeft, ChevronRight, Eye, EyeOff, Loader2 } from "lucide-react"
+import { ChevronLeft, ChevronRight, Eye, EyeOff, Loader2, Volume2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
+import { toast } from "sonner"
 
 interface VocabularyItem {
   id: number
@@ -25,6 +24,23 @@ export function VocabularyPage() {
   const [checkedItems, setCheckedItems] = useState<Set<number>>(new Set())
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [hideDetails, setHideDetails] = useState<boolean>(false)
+
+  // 발음 재생 함수 (Web Speech API 활용)
+  const playPronunciation = (text: string) => {
+    if (!window.speechSynthesis) {
+      toast.error("이 브라우저는 음성 재생을 지원하지 않습니다.")
+      return
+    }
+
+    // 재생 중인 음성 중지
+    window.speechSynthesis.cancel()
+
+    const utterance = new SpeechSynthesisUtterance(text)
+    utterance.lang = "ja-JP" // 일본어 설정
+    utterance.rate = 0.8 // 약간 천천히
+
+    window.speechSynthesis.speak(utterance)
+  }
 
   const fetchVocabulary = async () => {
     setIsLoading(true)
@@ -194,6 +210,20 @@ export function VocabularyPage() {
                   </>
                 )}
               </div>
+              
+              {/* 발음 듣기 버튼 */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-8 rounded-full hover:bg-blue-50 hover:text-blue-600 shrink-0"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  playPronunciation(item.kanji)
+                }}
+                title="발음 듣기"
+              >
+                <Volume2 className="size-4" />
+              </Button>
             </div>
           ))}
         </div>

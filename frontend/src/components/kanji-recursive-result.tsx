@@ -7,7 +7,14 @@ export interface KanjiNode {
   components: string[]
 }
 
+export interface WordInfo {
+  meaning_ko: string
+  reading_hiragana: string
+  reading_katakana: string
+}
+
 export interface KanjiRecursiveData {
+  word_info?: WordInfo
   nodes: Record<string, KanjiNode>
   origin: Record<string, string>
   confidence: "high" | "low"
@@ -72,14 +79,44 @@ export function KanjiRecursiveResult({ data, word }: { data: KanjiRecursiveData,
         <div className="absolute top-0 right-0 p-8 opacity-10">
           <Hash className="size-32 text-white rotate-12" />
         </div>
-        <div className="relative z-10 flex flex-col md:flex-row md:items-end gap-6">
+        <div className="relative z-10 flex flex-col md:flex-row md:items-end gap-8">
           <div className="space-y-1">
             <p className="text-blue-100 text-[10px] font-black uppercase tracking-[0.4em] mb-2">Detailed Analysis</p>
             <h2 className="text-6xl font-black text-white tracking-tighter">
               {word}
             </h2>
           </div>
-          <div className="h-12 w-[2px] bg-white/20 hidden md:block mb-1" />
+          
+          {data.word_info && (
+            <>
+              <div className="h-12 w-[2px] bg-white/20 hidden md:block mb-1" />
+              <div className="flex flex-col gap-2 mb-1">
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary" className="bg-white/10 text-white border-none font-bold text-xs">
+                    뜻
+                  </Badge>
+                  <span className="text-xl font-bold text-white">{data.word_info.meaning_ko}</span>
+                </div>
+                <div className="flex gap-4">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="bg-blue-400/20 text-blue-100 border-none font-bold text-[10px]">
+                      히라가나
+                    </Badge>
+                    <span className="text-sm font-medium text-blue-50">{data.word_info.reading_hiragana}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="bg-blue-400/20 text-blue-100 border-none font-bold text-[10px]">
+                      가타카나
+                    </Badge>
+                    <span className="text-sm font-medium text-blue-50">{data.word_info.reading_katakana}</span>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          <div className="flex-1" />
+          
           <div className="flex flex-wrap gap-2 mb-1">
             {rootChars.map(c => (
               <Badge key={c} variant="outline" className="bg-white/10 border-white/20 text-white font-bold backdrop-blur-sm">
