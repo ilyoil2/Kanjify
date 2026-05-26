@@ -25,22 +25,43 @@ export function VocabularyPage() {
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [hideDetails, setHideDetails] = useState<boolean>(false)
 
-  // 발음 재생 함수 (Web Speech API 활용)
+  // 발음 재생 함수 (Web Speech API 최적화 - Mac 고품질 음성 우선)
   const playPronunciation = (text: string) => {
     if (!window.speechSynthesis) {
       toast.error("이 브라우저는 음성 재생을 지원하지 않습니다.")
       return
     }
 
-    // 재생 중인 음성 중지
     window.speechSynthesis.cancel()
-
     const utterance = new SpeechSynthesisUtterance(text)
-    utterance.lang = "ja-JP" // 일본어 설정
-    utterance.rate = 0.8 // 약간 천천히
+    
+    // 사용 가능한 목소리 목록 가져오기
+    const voices = window.speechSynthesis.getVoices()
+    
+    // 1순위: Kyoko (Mac 고품질 여성), 2순위: Otoya (Mac 고품질 남성), 3순위: 일본어(ja-JP) 포함된 목소리
+    const preferredVoice = 
+      voices.find(v => v.name.includes("Kyoko")) || 
+      voices.find(v => v.name.includes("Otoya")) || 
+      voices.find(v => v.lang === "ja-JP" || v.lang === "ja_JP")
+
+    if (preferredVoice) {
+      utterance.voice = preferredVoice
+      console.log("선택된 음성:", preferredVoice.name)
+    }
+
+    utterance.lang = "ja-JP"
+    utterance.rate = 0.9 // 속도 살짝 조정
+    utterance.pitch = 1.0
 
     window.speechSynthesis.speak(utterance)
   }
+
+  // 목소리 목록이 로드되지 않았을 때를 대비해 더미 호출 (일부 브라우저 대응)
+  useEffect(() => {
+    if (window.speechSynthesis.onvoiceschanged !== undefined) {
+      window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices()
+    }
+  }, [])
 
   const fetchVocabulary = async () => {
     setIsLoading(true)
