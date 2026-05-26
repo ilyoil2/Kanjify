@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { Search, Sparkles, Trash2, History, AlertCircle, Loader2 } from "lucide-react"
+import { Search, Sparkles, Trash2, History, AlertCircle, Loader2, ChevronLeft } from "lucide-react"
 import { Navbar } from "@/components/navbar"
 import { KanjiInput } from "@/components/kanji-input"
 import { KanjiRecursiveResult, type KanjiRecursiveData } from "@/components/kanji-recursive-result"
@@ -9,6 +9,7 @@ import { KanjiAnalyzerSidebar } from "@/components/kanji-analyzer-sidebar"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { toast } from "sonner"
 
 interface HistoryItem {
   id: number // This will now be the backend ID for tab history, or a temp ID for sidebar
@@ -32,6 +33,7 @@ export default function KanjiDashboard({ user, onLogout, currentPath, navigateTo
   const [currentResult, setCurrentResult] = useState<{word: string, data: KanjiRecursiveData} | null>(null)
   const [sidebarHistory, setSidebarHistory] = useState<HistoryItem[]>([]) // Local storage history for sidebar
   const [tabHistory, setTabHistory] = useState<HistoryItem[]>([]) // Backend history for the History tab
+  const [historyAnalysisResult, setHistoryAnalysisResult] = useState<{word: string, data: KanjiRecursiveData} | null>(null) // Inline history result
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
@@ -96,7 +98,7 @@ export default function KanjiDashboard({ user, onLogout, currentPath, navigateTo
     }
   }, [activeTab, user]) // Fetch history when tab changes to 'history' or user changes
 
-  const handleKanjiSubmit = async (word: string) => {
+  const handleKanjiSubmit = async (word: string, skipHistory: boolean = false) => {
     setIsLoading(true)
     setError(null)
     
@@ -108,7 +110,8 @@ export default function KanjiDashboard({ user, onLogout, currentPath, navigateTo
         },
         body: JSON.stringify({ 
           word,
-          email: user?.email // Pass user email for backend history tracking
+          email: user?.email,
+          skip_history: skipHistory
         }),
       })
 
@@ -122,20 +125,19 @@ export default function KanjiDashboard({ user, onLogout, currentPath, navigateTo
       const newResult = { word, data }
       setCurrentResult(newResult)
 
-      // Update sidebar history locally immediately for responsiveness
-      setSidebarHistory(prev => {
-        const newEntry = {
-          id: Date.now(), // Temporary ID for local sidebar history
-          word,
-          data, // Store the full data for the sidebar
-          timestamp: Date.now()
-        }
-        // Avoid adding exact duplicates immediately if it's already in the current view state
-        const filtered = prev.filter(h => h.word !== word)
-        return [newEntry, ...filtered].slice(0, 20)
-      })
-      // Note: Backend history is saved via save_analysis_to_db in a thread.
-      // The tabbed history (tabHistory) will be refreshed when the tab is activated.
+      // Update sidebar history locally immediately
+      if (!skipHistory) {
+        setSidebarHistory(prev => {
+          const newEntry = {
+            id: Date.now(),
+            word,
+            data,
+            timestamp: Date.now()
+          }
+          const filtered = prev.filter(h => h.word !== word)
+          return [newEntry, ...filtered].slice(0, 20)
+        })
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "알 수 오류가 발생했습니다.")
     } finally {
@@ -143,7 +145,7 @@ export default function KanjiDashboard({ user, onLogout, currentPath, navigateTo
     }
   }
 
-  // Sidebar delete/clear operations (local)
+  // Sidebar delete operations (local)
   const deleteSidebarHistoryEntry = (e: React.MouseEvent, word: string) => {
     e.stopPropagation()
     setSidebarHistory(prev => prev.filter(h => h.word !== word))
@@ -152,12 +154,7 @@ export default function KanjiDashboard({ user, onLogout, currentPath, navigateTo
     }
   }
 
-  const clearSidebarHistory = () => {
-    setSidebarHistory([])
-    setCurrentResult(null)
-  }
-
-  // 백엔드 히스토리 삭제/초기화 구현
+  // 백엔드 히스토리 삭제 구현
   const deleteBackendHistoryEntry = async (id: number) => {
     try {
       const response = await fetch(`http://localhost:8002/api/history/?id=${id}&email=${user?.email || ""}`, {
@@ -170,25 +167,36 @@ export default function KanjiDashboard({ user, onLogout, currentPath, navigateTo
     }
   }
 
-  const clearBackendHistory = async () => {
-    if (!confirm("전체 히스토리를 삭제하시겠습니까?")) return
+  const handleReAnalyze = async (word: string) => {
+    setIsLoading(true)
+    setError(null)
     try {
-      const response = await fetch(`http://localhost:8002/api/history/?email=${user?.email || ""}`, {
-        method: 'DELETE'
+      const response = await fetch("http://localhost:8002/api/analyze-kanji/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ 
+          word,
+          email: user?.email,
+          skip_history: true 
+        }),
       })
-      if (!response.ok) throw new Error("초기화 실패")
-      setTabHistory([])
-      toast.success("히스토리가 초기화되었습니다.")
+
+      if (!response.ok) throw new Error("분석 결과를 가져오는데 실패했습니다.")
+      const data: KanjiRecursiveData = await response.json()
+      setHistoryAnalysisResult({ word, data })
     } catch (err) {
-      toast.error("초기화 중 오류가 발생했습니다.")
+      toast.error(err instanceof Error ? err.message : "오류가 발생했습니다.")
+    } finally {
+      setIsLoading(false)
     }
   }
 
-  const handleReAnalyze = (word: string) => {
-    setActiveTab("main")
-    navigateTo("/")
-    handleKanjiSubmit(word)
-  }
+  // 탭 전환 시 히스토리 분석 결과 초기화
+  useEffect(() => {
+    setHistoryAnalysisResult(null)
+  }, [activeTab])
 
 
   return (
@@ -198,7 +206,6 @@ export default function KanjiDashboard({ user, onLogout, currentPath, navigateTo
       <div className="flex-1 flex pt-16 h-[calc(100vh-64px)] overflow-hidden">
         {activeTab === "main" ? (
           <>
-            {/* 좌측 히스토리 사이드바 (로컬 스토리지 기반) */}
             <aside className="w-72 border-r border-slate-200 bg-white hidden md:flex flex-col shadow-sm">
               <div className="p-6 border-b border-slate-50 flex items-center justify-between">
                 <div className="flex items-center gap-2 font-black text-xs uppercase tracking-widest text-blue-600">
@@ -207,10 +214,10 @@ export default function KanjiDashboard({ user, onLogout, currentPath, navigateTo
               </div>
               <ScrollArea className="flex-1">
                 <div className="p-4 space-y-3">
-                  {sidebarHistory.map((item) => ( // Using item.id which is Date.now() for local key
+                  {sidebarHistory.map((item) => (
                     <div key={item.id} className="group relative"> 
                       <button
-                        onClick={() => setCurrentResult({ word: item.word, data: item.data! })}
+                        onClick={() => handleKanjiSubmit(item.word, true)}
                         className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all duration-300 ${
                           currentResult?.word === item.word 
                             ? "bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-200 scale-[1.02]" 
@@ -227,7 +234,7 @@ export default function KanjiDashboard({ user, onLogout, currentPath, navigateTo
                         </div>
                       </button>
                       <button 
-                        onClick={(e) => deleteSidebarHistoryEntry(e, item.word)} // Pass word for local filtering
+                        onClick={(e) => deleteSidebarHistoryEntry(e, item.word)}
                         className={`absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full transition-all ${
                           currentResult?.word === item.word ? "text-blue-200 hover:text-white hover:bg-blue-500" : "opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-500 hover:bg-red-50"
                         }`}
@@ -250,10 +257,8 @@ export default function KanjiDashboard({ user, onLogout, currentPath, navigateTo
               </ScrollArea>
             </aside>
 
-            {/* 메인 분석 영역 */}
             <main className="flex-1 overflow-y-auto bg-slate-50/50">
               <div className="max-w-5xl mx-auto p-6 lg:p-12 space-y-12">
-                {/* Search Header */}
                 <div className="space-y-8">
                   <div className="text-center space-y-3">
                     <h1 className="text-5xl font-black tracking-tighter text-slate-900">
@@ -265,11 +270,10 @@ export default function KanjiDashboard({ user, onLogout, currentPath, navigateTo
                   </div>
                   
                   <div className="max-w-2xl mx-auto">
-                    <KanjiInput onSubmit={handleKanjiSubmit} isLoading={isLoading} />
+                    <KanjiInput onSubmit={(word) => handleKanjiSubmit(word)} isLoading={isLoading} />
                   </div>
                 </div>
 
-                {/* Status & Results */}
                 <div className="min-h-[400px]">
                   {isLoading ? (
                     <div className="flex flex-col items-center justify-center py-32 space-y-6">
@@ -326,17 +330,31 @@ export default function KanjiDashboard({ user, onLogout, currentPath, navigateTo
           <main className="flex-1 overflow-y-auto p-10 bg-slate-50">
             <div className="max-w-5xl mx-auto">
               {activeTab === "history" ? (
-                <HistoryPage 
-                  history={tabHistory.map(h => ({ 
-                    id: h.id, 
-                    word: h.word, 
-                    meaning: h.meaning || "분석 완료", 
-                    timestamp: h.timestamp
-                  }))} 
-                  onDeleteEntry={deleteBackendHistoryEntry}
-                  onClearHistory={() => {}} // No-op
-                  onReAnalyze={handleReAnalyze}
-                />
+                historyAnalysisResult ? (
+                  <div className="space-y-6 animate-in fade-in duration-500">
+                    <Button 
+                      variant="ghost" 
+                      onClick={() => setHistoryAnalysisResult(null)}
+                      className="rounded-full hover:bg-slate-200 font-bold mb-4"
+                    >
+                      <ChevronLeft className="size-4 mr-2" />
+                      Back to History List
+                    </Button>
+                    <KanjiRecursiveResult data={historyAnalysisResult.data} word={historyAnalysisResult.word} />
+                  </div>
+                ) : (
+                  <HistoryPage 
+                    history={tabHistory.map(h => ({ 
+                      id: h.id, 
+                      word: h.word, 
+                      meaning: h.meaning || "분석 완료", 
+                      timestamp: h.timestamp
+                    }))} 
+                    onDeleteEntry={deleteBackendHistoryEntry}
+                    onClearHistory={() => {}} // No-op
+                    onReAnalyze={handleReAnalyze}
+                  />
+                )
               ) : <VocabularyPage />}
             </div>
           </main>
@@ -358,4 +376,3 @@ export default function KanjiDashboard({ user, onLogout, currentPath, navigateTo
     </div>
   )
 }
-
