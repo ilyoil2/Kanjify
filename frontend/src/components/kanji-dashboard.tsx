@@ -380,7 +380,8 @@ export default function KanjiDashboard({ user, onLogout, currentPath, navigateTo
                         {historyAnalysisResult && (
                           <KanjiRecursiveResult 
                             data={historyAnalysisResult.data} 
-                            word={historyAnalysisResult.word} 
+                            word={historyAnalysisResult.word}
+                            variant="history" 
                           />
                         )}
                       </div>
