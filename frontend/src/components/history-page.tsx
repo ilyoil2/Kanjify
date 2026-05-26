@@ -139,27 +139,27 @@ export function HistoryPage({ history, onDeleteEntry, onClearHistory, onReAnalyz
                   className="rounded-full size-5 border-slate-300 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
                 />
                 
-                <div className="flex-1 min-w-0 grid grid-cols-1 md:grid-cols-12 items-center gap-4">
-                  {/* 단어 (왼쪽 정렬) */}
-                  <div className="md:col-span-2">
+                <div className="flex-1 min-w-0 flex items-center gap-8">
+                  {/* 단어 */}
+                  <div className="shrink-0">
                     <span className="text-2xl font-black text-slate-900 tracking-tight">
                       {item.word}
                     </span>
                   </div>
 
-                  {/* 뜻 및 시간 (더 왼쪽으로 밀착) - col-span을 조절하여 액션 버튼 공간 확보 및 왼쪽 밀착 */}
-                  <div className="md:col-span-7 flex flex-col md:flex-row md:items-center gap-3">
-                    <p className="text-sm font-bold text-slate-600 truncate max-w-[250px]">
+                  {/* 뜻 및 시간 (한자 바로 옆으로 밀착) */}
+                  <div className="flex flex-1 flex-col md:flex-row md:items-center gap-4 min-w-0">
+                    <p className="text-sm font-bold text-slate-600 truncate max-w-[300px]">
                       {item.meaning}
                     </p>
-                    <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                    <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-bold uppercase tracking-wider shrink-0">
                       <Calendar className="size-3" />
                       {new Date(item.timestamp).toLocaleDateString()}
                     </div>
                   </div>
 
-                  {/* 액션 버튼 (오른쪽 정렬) */}
-                  <div className="md:col-span-3 flex justify-end gap-2">
+                  {/* 액션 버튼 (오른쪽 끝 유지) */}
+                  <div className="flex justify-end gap-2 shrink-0 ml-auto">
                     <Button
                       variant="ghost"
                       size="sm"
