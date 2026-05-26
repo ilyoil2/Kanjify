@@ -141,42 +141,44 @@ export function HistoryPage({ history, onDeleteEntry, onClearHistory, onReAnalyz
                 
                 <div className="flex-1 min-w-0 flex items-center gap-8">
                   {/* 단어 */}
-                  <div className="shrink-0">
-                    <span className="text-2xl font-black text-slate-900 tracking-tight">
+                  <div className="shrink-0 min-w-[80px]">
+                    <span className="text-3xl font-black text-slate-900 tracking-tight">
                       {item.word}
                     </span>
                   </div>
 
-                  {/* 뜻 및 시간 (한자 바로 옆으로 밀착) */}
-                  <div className="flex flex-1 flex-col md:flex-row md:items-center gap-4 min-w-0">
-                    <p className="text-sm font-bold text-slate-600 truncate max-w-[300px]">
+                  {/* 뜻 (한자 바로 옆) */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-slate-600 truncate max-w-[400px]">
                       {item.meaning}
                     </p>
-                    <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-bold uppercase tracking-wider shrink-0">
+                  </div>
+
+                  {/* 날짜 및 액션 (오른쪽 정렬) */}
+                  <div className="flex items-center gap-6 shrink-0 ml-auto">
+                    <div className="hidden md:flex items-center gap-1.5 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
                       <Calendar className="size-3" />
                       {new Date(item.timestamp).toLocaleDateString()}
                     </div>
-                  </div>
-
-                  {/* 액션 버튼 (오른쪽 끝 유지) */}
-                  <div className="flex justify-end gap-2 shrink-0 ml-auto">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onReAnalyze(item.word)}
-                      className="rounded-full hover:bg-blue-50 hover:text-blue-600 font-bold text-xs h-9 px-4"
-                    >
-                      <ExternalLink className="size-3.5 mr-1.5" />
-                      Analyze
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => onDeleteEntry(item.id)}
-                      className="rounded-full hover:bg-red-50 hover:text-red-500 size-9 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <Trash2 className="size-4" />
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onReAnalyze(item.word)}
+                        className="rounded-full hover:bg-blue-50 hover:text-blue-600 font-bold text-xs h-9 px-4"
+                      >
+                        <ExternalLink className="size-3.5 mr-1.5" />
+                        Analyze
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => onDeleteEntry(item.id)}
+                        className="rounded-full hover:bg-red-50 hover:text-red-500 size-9 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -246,4 +248,3 @@ export function HistoryPage({ history, onDeleteEntry, onClearHistory, onReAnalyz
     </div>
   )
 }
-
