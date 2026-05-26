@@ -9,6 +9,13 @@ import { KanjiAnalyzerSidebar } from "@/components/kanji-analyzer-sidebar"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle,
+  DialogDescription
+} from "@/components/ui/dialog"
 import { toast } from "sonner"
 
 interface HistoryItem {
@@ -326,14 +333,6 @@ export default function KanjiDashboard({ user, onLogout, currentPath, navigateTo
               </div>
             </main>
           </>
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle,
-  DialogDescription
-} from "@/components/ui/dialog"
-...
         ) : (
           <main className="flex-1 overflow-y-auto p-10 bg-slate-50">
             <div className="max-w-5xl mx-auto">
