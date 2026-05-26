@@ -108,17 +108,19 @@ export function HistoryPage({ history, onDeleteEntry, onClearHistory, onReAnalyz
       </div>
 
       {/* Search and Filters */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
-        <Input 
-          placeholder="단어나 뜻으로 검색..." 
-          className="pl-11 h-12 rounded-2xl border-slate-200 focus:ring-blue-600 focus:border-blue-600 bg-white shadow-sm"
-          value={searchTerm}
-          onChange={(e) => {
-            setSearchTerm(e.target.value)
-            setCurrentPage(1)
-          }}
-        />
+      <div className="max-w-md">
+        <div className="relative flex items-center">
+          <Search className="absolute left-4 size-4 text-slate-400" />
+          <Input 
+            placeholder="단어, 뜻으로 검색..." 
+            className="pl-11 h-11 rounded-xl border-slate-200 focus:border-blue-500 bg-white shadow-sm text-sm"
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value)
+              setCurrentPage(1)
+            }}
+          />
+        </div>
       </div>
 
       {filteredHistory.length > 0 ? (
@@ -127,7 +129,7 @@ export function HistoryPage({ history, onDeleteEntry, onClearHistory, onReAnalyz
             {currentItems.map((item) => (
               <div
                 key={item.id}
-                className={`group flex items-center gap-4 p-4 bg-white border rounded-3xl transition-all duration-300 hover:shadow-xl hover:shadow-slate-200/50 hover:border-blue-100 ${
+                className={`group flex items-center gap-4 p-4 bg-white border rounded-2xl transition-all duration-300 hover:shadow-lg hover:border-blue-100 ${
                   selectedItems.has(item.id) ? "border-blue-600 bg-blue-50/30" : "border-slate-100"
                 }`}
               >
@@ -137,36 +139,41 @@ export function HistoryPage({ history, onDeleteEntry, onClearHistory, onReAnalyz
                   className="rounded-full size-5 border-slate-300 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
                 />
                 
-                <div className="flex-1 min-w-0 grid grid-cols-1 md:grid-cols-4 items-center gap-4">
-                  <div className="md:col-span-1">
+                <div className="flex-1 min-w-0 grid grid-cols-1 md:grid-cols-12 items-center gap-4">
+                  {/* 단어 (왼쪽 정렬) */}
+                  <div className="md:col-span-2">
                     <span className="text-2xl font-black text-slate-900 tracking-tight">
                       {item.word}
                     </span>
                   </div>
-                  <div className="md:col-span-2">
-                    <p className="text-sm font-bold text-slate-600 truncate">
+
+                  {/* 뜻 및 시간 (더 왼쪽으로 밀착) - col-span을 조절하여 액션 버튼 공간 확보 및 왼쪽 밀착 */}
+                  <div className="md:col-span-7 flex flex-col md:flex-row md:items-center gap-3">
+                    <p className="text-sm font-bold text-slate-600 truncate max-w-[250px]">
                       {item.meaning}
                     </p>
-                    <div className="flex items-center gap-1.5 mt-1 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                    <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
                       <Calendar className="size-3" />
-                      {new Date(item.timestamp).toLocaleDateString()} {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {new Date(item.timestamp).toLocaleDateString()}
                     </div>
                   </div>
-                  <div className="md:col-span-1 flex justify-end gap-2">
+
+                  {/* 액션 버튼 (오른쪽 정렬) */}
+                  <div className="md:col-span-3 flex justify-end gap-2">
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => onReAnalyze(item.word)}
-                      className="rounded-full hover:bg-blue-50 hover:text-blue-600 font-bold text-xs"
+                      className="rounded-full hover:bg-blue-50 hover:text-blue-600 font-bold text-xs h-9 px-4"
                     >
-                      <ExternalLink className="size-3 mr-1.5" />
+                      <ExternalLink className="size-3.5 mr-1.5" />
                       Analyze
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={() => onDeleteEntry(item.id)}
-                      className="rounded-full hover:bg-red-50 hover:text-red-500 size-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="rounded-full hover:bg-red-50 hover:text-red-500 size-9 opacity-0 group-hover:opacity-100 transition-opacity"
                     >
                       <Trash2 className="size-4" />
                     </Button>
