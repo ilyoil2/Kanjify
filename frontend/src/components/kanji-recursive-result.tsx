@@ -99,7 +99,7 @@ export function KanjiRecursiveResult({ data, word, variant = "default" }: KanjiR
   const themeBg = isHistory ? "bg-indigo-50" : "bg-blue-50"
 
   return (
-    <div className={`space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-10 ${isHistory ? "max-w-4xl mx-auto" : ""}`}>
+    <div className={`space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-10 ${isHistory ? "w-full" : ""}`}>
       {/* 1. 요약 카드 */}
       <div className={`bg-gradient-to-br ${themeBase} rounded-[40px] p-10 shadow-2xl relative overflow-hidden`}>
         <div className="absolute top-0 right-0 p-8 opacity-10">
@@ -156,7 +156,7 @@ export function KanjiRecursiveResult({ data, word, variant = "default" }: KanjiR
           </div>
           
           <div className="bg-white border border-slate-100 rounded-[32px] p-10 shadow-xl shadow-slate-200/40">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+            <div className="grid grid-cols-1 gap-16">
               {rootChars.map(c => (
                 <div key={`root-${c}`} className="space-y-6">
                   <RecursiveComponent char={c} nodes={data.nodes} isRoot={true} accentColor={themeAccent} />
