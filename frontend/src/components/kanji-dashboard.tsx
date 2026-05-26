@@ -326,23 +326,19 @@ export default function KanjiDashboard({ user, onLogout, currentPath, navigateTo
               </div>
             </main>
           </>
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle,
+  DialogDescription
+} from "@/components/ui/dialog"
+...
         ) : (
           <main className="flex-1 overflow-y-auto p-10 bg-slate-50">
             <div className="max-w-5xl mx-auto">
               {activeTab === "history" ? (
-                historyAnalysisResult ? (
-                  <div className="space-y-6 animate-in fade-in duration-500">
-                    <Button 
-                      variant="ghost" 
-                      onClick={() => setHistoryAnalysisResult(null)}
-                      className="rounded-full hover:bg-slate-200 font-bold mb-4"
-                    >
-                      <ChevronLeft className="size-4 mr-2" />
-                      Back to History List
-                    </Button>
-                    <KanjiRecursiveResult data={historyAnalysisResult.data} word={historyAnalysisResult.word} />
-                  </div>
-                ) : (
+                <>
                   <HistoryPage 
                     history={tabHistory.map(h => ({ 
                       id: h.id, 
@@ -351,10 +347,47 @@ export default function KanjiDashboard({ user, onLogout, currentPath, navigateTo
                       timestamp: h.timestamp
                     }))} 
                     onDeleteEntry={deleteBackendHistoryEntry}
-                    onClearHistory={() => {}} // No-op
+                    onClearHistory={() => {}} 
                     onReAnalyze={handleReAnalyze}
                   />
-                )
+
+                  {/* 히스토리 상세 분석 다이얼로그 (오버레이) */}
+                  <Dialog 
+                    open={!!historyAnalysisResult} 
+                    onOpenChange={(open) => !open && setHistoryAnalysisResult(null)}
+                  >
+                    <DialogContent className="max-w-5xl h-[90vh] overflow-y-auto rounded-3xl border-none shadow-2xl p-0 bg-slate-50">
+                      <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-100 p-6 flex items-center justify-between">
+                        <div>
+                          <DialogTitle className="text-xl font-black text-slate-900 flex items-center gap-2">
+                            <History className="size-5 text-blue-600" />
+                            History Record: <span className="text-blue-600">{historyAnalysisResult?.word}</span>
+                          </DialogTitle>
+                          <DialogDescription className="text-xs font-medium text-slate-500 mt-0.5">
+                            과거에 분석했던 단어의 상세 정보입니다.
+                          </DialogDescription>
+                        </div>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => setHistoryAnalysisResult(null)}
+                          className="rounded-full font-bold"
+                        >
+                          Close
+                        </Button>
+                      </div>
+                      
+                      <div className="p-8">
+                        {historyAnalysisResult && (
+                          <KanjiRecursiveResult 
+                            data={historyAnalysisResult.data} 
+                            word={historyAnalysisResult.word} 
+                          />
+                        )}
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </>
               ) : <VocabularyPage />}
             </div>
           </main>
