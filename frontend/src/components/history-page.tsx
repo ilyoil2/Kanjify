@@ -174,22 +174,11 @@ export function HistoryPage({ history, onDeleteEntry, onClearHistory, onReAnalyz
                 />
                 
                 <div className="flex-1 min-w-0 flex items-center gap-8">
-                  {/* 단어 및 발음 버튼 */}
-                  <div className="shrink-0 min-w-[120px] flex items-center gap-3">
+                  {/* 단어 */}
+                  <div className="shrink-0 min-w-[80px]">
                     <span className="text-3xl font-black text-slate-900 tracking-tight">
                       {item.word}
                     </span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="size-8 rounded-full hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        playPronunciation(item.word)
-                      }}
-                    >
-                      <Volume2 className="size-4" />
-                    </Button>
                   </div>
 
                   {/* 뜻 (한자 바로 옆) */}
@@ -206,6 +195,20 @@ export function HistoryPage({ history, onDeleteEntry, onClearHistory, onReAnalyz
                       {new Date(item.timestamp).toLocaleDateString()}
                     </div>
                     <div className="flex items-center gap-2">
+                      {/* 발음 버튼 (오른쪽으로 이동) */}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-9 rounded-full hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          playPronunciation(item.word)
+                        }}
+                        title="발음 듣기"
+                      >
+                        <Volume2 className="size-4" />
+                      </Button>
+                      
                       <Button
                         variant="ghost"
                         size="sm"
