@@ -63,3 +63,16 @@ class User(models.Model):
 
     class Meta:
         db_table = 'tbl_user'
+
+class SearchHistory(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    word_text = models.CharField(max_length=255)
+    meaning_ko = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.word_text} ({self.user.username if self.user else 'Guest'})"
+
+    class Meta:
+        db_table = 'tbl_search_history'
+        ordering = ['-created_at']
