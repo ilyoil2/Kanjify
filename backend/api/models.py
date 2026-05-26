@@ -28,6 +28,7 @@ class Vocabulary(models.Model):
         choices=MemorizeStatus.choices,
         default=MemorizeStatus.NOT_STARTED
     )
+    hidden_until = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

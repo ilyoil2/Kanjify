@@ -1,16 +1,37 @@
 import threading
 import traceback
+from datetime import timedelta
+from django.utils import timezone
 from django.contrib.auth.hashers import make_password, check_password
 from rest_framework import viewsets, status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, action
 from rest_framework.response import Response
 from .models import Vocabulary, Word, User, SearchHistory
 from .serializers import VocabularySerializer
 from .ai_utils import analyze_kanji
 
 class VocabularyViewSet(viewsets.ModelViewSet):
-    queryset = Vocabulary.objects.all().order_by('-created_at')
     serializer_class = VocabularySerializer
+
+    def get_queryset(self):
+        # 현재 시간 기준으로 hidden_until이 지났거나 없는 것만 반환
+        now = timezone.now()
+        return Vocabulary.objects.filter(
+            models.Q(hidden_until__isnull=True) | models.Q(hidden_until__lte=now)
+        ).order_by('-created_at')
+
+    @action(detail=False, methods=['post'])
+    def hide(self, request):
+        ids = request.data.get('ids', [])
+        days = request.data.get('days', 0)
+        
+        if not ids:
+            return Response({"error": "No IDs provided"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        until = timezone.now() + timedelta(days=days)
+        Vocabulary.objects.filter(id__in=ids).update(hidden_until=until)
+        
+        return Response({"message": f"{len(ids)} items hidden until {until}"})
 
 @api_view(['POST'])
 def signup_view(request):
