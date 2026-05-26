@@ -12,6 +12,7 @@ interface VocabularyItem {
   meaning_en: string
   n_level: string
   memorize_status: string
+  hidden_until: string | null
 }
 
 const jlptLevels = ["N1", "N2", "N3", "N4", "N5"] as const
@@ -46,7 +47,6 @@ export function VocabularyPage() {
 
     if (preferredVoice) {
       utterance.voice = preferredVoice
-      console.log("선택된 음성:", preferredVoice.name)
     }
 
     utterance.lang = "ja-JP"
@@ -108,6 +108,31 @@ export function VocabularyPage() {
     setCurrentPage(1)
   }
 
+  const handleHideItems = async (days: number) => {
+    if (checkedItems.size === 0) return
+    
+    try {
+      const response = await fetch("http://localhost:8002/api/vocabulary/hide/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ids: Array.from(checkedItems),
+          days: days
+        }),
+      })
+
+      if (!response.ok) throw new Error("숨기기 처리 실패")
+      
+      toast.success(`${checkedItems.size}개의 단어를 ${days}일 동안 숨겼습니다.`)
+      setCheckedItems(new Set())
+      fetchVocabulary() // 목록 새로고침
+    } catch (error) {
+      toast.error("처리 중 오류가 발생했습니다.")
+    }
+  }
+
   const checkedCount = vocabularyList.filter((item) => checkedItems.has(item.id)).length
 
   // Generate page numbers for pagination
@@ -147,33 +172,57 @@ export function VocabularyPage() {
 
   return (
     <div className="space-y-4">
-      {/* JLPT Level Tabs with Eye Toggle */}
-      <div className="flex items-center justify-between">
-        <div className="w-10" />
-        <div className="inline-flex items-center gap-1 rounded-md bg-muted p-1">
-          {jlptLevels.map((level) => (
-            <button
-              key={level}
-              onClick={() => handleLevelChange(level)}
-              className={`rounded px-4 py-2 text-sm font-medium transition-all duration-200 ${
-                activeLevel === level
-                  ? "bg-card text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {level}
-            </button>
-          ))}
+      {/* Header Actions */}
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <div className="inline-flex items-center gap-1 rounded-md bg-muted p-1">
+            {jlptLevels.map((level) => (
+              <button
+                key={level}
+                onClick={() => handleLevelChange(level)}
+                className={`rounded px-4 py-2 text-sm font-medium transition-all duration-200 ${
+                  activeLevel === level
+                    ? "bg-card text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {level}
+              </button>
+            ))}
+          </div>
         </div>
-        <Button
-          variant={hideDetails ? "default" : "outline"}
-          size="icon"
-          className="size-10"
-          onClick={() => setHideDetails(!hideDetails)}
-          title={hideDetails ? "Show all details" : "Hide details (Kanji only)"}
-        >
-          {hideDetails ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-        </Button>
+
+        <div className="flex items-center gap-2">
+          {checkedItems.size > 0 && (
+            <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-2 duration-300">
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="bg-yellow-50 hover:bg-yellow-100 text-yellow-700 border-yellow-200 font-bold rounded-full px-4 h-9"
+                onClick={() => handleHideItems(5)}
+              >
+                5일 숨기기
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="bg-red-50 hover:bg-red-100 text-red-700 border-red-200 font-bold rounded-full px-4 h-9"
+                onClick={() => handleHideItems(10)}
+              >
+                10일 숨기기
+              </Button>
+            </div>
+          )}
+          <Button
+            variant={hideDetails ? "default" : "outline"}
+            size="icon"
+            className="size-9 rounded-xl"
+            onClick={() => setHideDetails(!hideDetails)}
+            title={hideDetails ? "Show all details" : "Hide details (Kanji only)"}
+          >
+            {hideDetails ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+          </Button>
+        </div>
       </div>
 
       {/* Item Count */}
