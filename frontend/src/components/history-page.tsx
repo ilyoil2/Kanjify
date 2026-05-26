@@ -1,34 +1,45 @@
-import { useState, useEffect } from "react"
-import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react"
+import { useState, useMemo } from "react"
+import { ChevronLeft, ChevronRight, Trash2, Search, ExternalLink, Calendar } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
 
 interface HistoryItem {
-  id: number // Using timestamp as unique ID for local storage items
+  id: number
   word: string
   meaning: string
   timestamp: string
 }
 
 interface HistoryPageProps {
-  history: HistoryItem[] // This prop will now be the local state from KanjiDashboard
-  onDeleteEntry: (id: number) => void // This will trigger local filtering
-  onClearHistory: () => void // This will trigger local clearing
+  history: HistoryItem[]
+  onDeleteEntry: (id: number) => void
+  onClearHistory: () => void
+  onReAnalyze: (word: string) => void // New prop to jump back to analysis
 }
 
-const ITEMS_PER_PAGE = 20 // Number of items per page for history
+const ITEMS_PER_PAGE = 15
 
-export function HistoryPage({ history, onDeleteEntry, onClearHistory }: HistoryPageProps) {
+export function HistoryPage({ history, onDeleteEntry, onClearHistory, onReAnalyze }: HistoryPageProps) {
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set())
+  const [searchTerm, setSearchTerm] = useState("")
 
-  const totalPages = Math.max(1, Math.ceil(history.length / ITEMS_PER_PAGE))
+  // Filter history based on search term
+  const filteredHistory = useMemo(() => {
+    return history.filter(item => 
+      item.word.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.meaning.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  }, [history, searchTerm])
+
+  const totalPages = Math.max(1, Math.ceil(filteredHistory.length / ITEMS_PER_PAGE))
 
   // Get current page items
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
   const endIndex = startIndex + ITEMS_PER_PAGE
-  const currentItems = history.slice(startIndex, endIndex)
+  const currentItems = filteredHistory.slice(startIndex, endIndex)
 
   const handleCheckChange = (itemId: number, checked: boolean) => {
     setSelectedItems((prev) => {
@@ -43,144 +54,169 @@ export function HistoryPage({ history, onDeleteEntry, onClearHistory }: HistoryP
   }
   
   const handleDeleteSelected = () => {
-    if (selectedItems.size === 0) {
-      toast.warning("삭제할 항목을 선택해주세요.")
-      return
-    }
-    // Call the parent's handler for local state update
-    selectedItems.forEach(id => onDeleteEntry(id)) // Assuming onDeleteEntry can handle multiple IDs or is called per item
-    setSelectedItems(new Set()) // Clear selection
-  }
-
-  const handleClearAll = () => {
-    if (history.length === 0) {
-      toast.info("지울 히스토리가 없습니다.")
-      return
-    }
-    // Call the parent's handler for local state clearing
-    onClearHistory()
+    if (selectedItems.size === 0) return
+    selectedItems.forEach(id => onDeleteEntry(id))
+    setSelectedItems(new Set())
+    toast.success(`${selectedItems.size}개의 기록이 삭제되었습니다.`)
   }
 
   // Generate page numbers for pagination
   const getPageNumbers = () => {
     const pages: (number | string)[] = []
-    
     if (totalPages <= 7) {
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i)
-      }
+      for (let i = 1; i <= totalPages; i++) pages.push(i)
     } else {
       if (currentPage <= 4) {
-        for (let i = 1; i <= 5; i++) {
-          pages.push(i)
-        }
+        for (let i = 1; i <= 5; i++) pages.push(i)
         pages.push("...")
         pages.push(totalPages)
       } else if (currentPage >= totalPages - 3) {
         pages.push(1)
         pages.push("...")
-        for (let i = totalPages - 4; i <= totalPages; i++) {
-          pages.push(i)
-        }
+        for (let i = totalPages - 4; i <= totalPages; i++) pages.push(i)
       } else {
         pages.push(1)
         pages.push("...")
-        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
-          pages.push(i)
-        }
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) pages.push(i)
         pages.push("...")
         pages.push(totalPages)
       }
     }
-    
     return pages
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-foreground">Analysis History</h2>
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-3xl font-black tracking-tighter text-slate-900">Analysis History</h2>
+          <p className="text-sm text-slate-500 font-medium">과거에 분석했던 한자들을 다시 확인하고 관리하세요.</p>
+        </div>
         <div className="flex items-center gap-2">
           {selectedItems.size > 0 && (
-            <Button variant="destructive" size="sm" onClick={handleDeleteSelected}>
+            <Button 
+              variant="destructive" 
+              size="sm" 
+              onClick={handleDeleteSelected}
+              className="rounded-full px-4 shadow-lg shadow-red-100"
+            >
+              <Trash2 className="size-4 mr-2" />
               Delete Selected ({selectedItems.size})
             </Button>
           )}
-          <Button variant="outline" size="sm" onClick={handleClearAll}>
-            Clear All
-          </Button>
         </div>
       </div>
 
-      {history.length > 0 ? (
-        <>
+      {/* Search and Filters */}
+      <div className="relative max-w-md">
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
+        <Input 
+          placeholder="단어나 뜻으로 검색..." 
+          className="pl-11 h-12 rounded-2xl border-slate-200 focus:ring-blue-600 focus:border-blue-600 bg-white shadow-sm"
+          value={searchTerm}
+          onChange={(e) => {
+            setSearchTerm(e.target.value)
+            setCurrentPage(1)
+          }}
+        />
+      </div>
+
+      {filteredHistory.length > 0 ? (
+        <div className="space-y-6">
           <div className="grid grid-cols-1 gap-3">
             {currentItems.map((item) => (
               <div
-                key={item.id} // item.id is from Date.now() or similar, unique enough for local history
-                className={`flex items-center gap-3 px-4 py-3 bg-card border border-border rounded-md transition-colors cursor-pointer ${
-                  selectedItems.has(item.id) ? "bg-muted/30 border-primary/30" : ""
+                key={item.id}
+                className={`group flex items-center gap-4 p-4 bg-white border rounded-3xl transition-all duration-300 hover:shadow-xl hover:shadow-slate-200/50 hover:border-blue-100 ${
+                  selectedItems.has(item.id) ? "border-blue-600 bg-blue-50/30" : "border-slate-100"
                 }`}
-                onClick={() => handleCheckChange(item.id, !selectedItems.has(item.id))}
               >
                 <Checkbox
                   checked={selectedItems.has(item.id)}
-                  onCheckedChange={(checked) =>
-                    handleCheckChange(item.id, checked as boolean)
-                  }
-                  onClick={(e) => e.stopPropagation()}
-                  className="rounded-sm"
+                  onCheckedChange={(checked) => handleCheckChange(item.id, checked as boolean)}
+                  className="rounded-full size-5 border-slate-300 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
                 />
-                <div className="flex flex-col min-w-0 flex-1">
-                  <span className="font-bold text-lg text-foreground truncate">
-                    {item.word}
-                  </span>
-                  <span className="text-sm text-muted-foreground truncate">
-                    {item.meaning}
-                  </span>
+                
+                <div className="flex-1 min-w-0 grid grid-cols-1 md:grid-cols-4 items-center gap-4">
+                  <div className="md:col-span-1">
+                    <span className="text-2xl font-black text-slate-900 tracking-tight">
+                      {item.word}
+                    </span>
+                  </div>
+                  <div className="md:col-span-2">
+                    <p className="text-sm font-bold text-slate-600 truncate">
+                      {item.meaning}
+                    </p>
+                    <div className="flex items-center gap-1.5 mt-1 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                      <Calendar className="size-3" />
+                      {new Date(item.timestamp).toLocaleDateString()} {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                  </div>
+                  <div className="md:col-span-1 flex justify-end gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onReAnalyze(item.word)}
+                      className="rounded-full hover:bg-blue-50 hover:text-blue-600 font-bold text-xs"
+                    >
+                      <ExternalLink className="size-3 mr-1.5" />
+                      Analyze
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onDeleteEntry(item.id)}
+                      className="rounded-full hover:bg-red-50 hover:text-red-500 size-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                  </div>
                 </div>
-                <span className="text-xs text-muted-foreground shrink-0">
-                  {new Date(item.timestamp).toLocaleString()}
-                </span>
               </div>
             ))}
           </div>
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-1 pt-4">
+            <div className="flex items-center justify-center gap-2 pt-4">
               <Button
                 variant="outline"
                 size="icon"
-                className="size-9 rounded-md"
+                className="size-10 rounded-2xl border-slate-200"
                 onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
               >
                 <ChevronLeft className="size-4" />
               </Button>
 
-              {getPageNumbers().map((page, index) => (
-                typeof page === "number" ? (
-                  <Button
-                    key={index}
-                    variant={currentPage === page ? "default" : "outline"}
-                    size="icon"
-                    className="size-9 rounded-md"
-                    onClick={() => setCurrentPage(page)}
-                  >
-                    {page}
-                  </Button>
-                ) : (
-                  <span key={index} className="px-2 text-muted-foreground">
-                    {page}
-                  </span>
-                )
-              ))}
+              <div className="flex items-center gap-1">
+                {getPageNumbers().map((page, index) => (
+                  typeof page === "number" ? (
+                    <Button
+                      key={index}
+                      variant={currentPage === page ? "default" : "outline"}
+                      size="sm"
+                      className={`size-10 rounded-2xl font-bold ${
+                        currentPage === page 
+                          ? "bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-100" 
+                          : "border-slate-200 text-slate-600"
+                      }`}
+                      onClick={() => setCurrentPage(page)}
+                    >
+                      {page}
+                    </Button>
+                  ) : (
+                    <span key={index} className="px-2 text-slate-400 font-bold">
+                      {page}
+                    </span>
+                  )
+                ))}
+              </div>
 
               <Button
                 variant="outline"
                 size="icon"
-                className="size-9 rounded-md"
+                className="size-10 rounded-2xl border-slate-200"
                 onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
                 disabled={currentPage === totalPages}
               >
@@ -188,13 +224,19 @@ export function HistoryPage({ history, onDeleteEntry, onClearHistory }: HistoryP
               </Button>
             </div>
           )}
-        </>
+        </div>
       ) : (
-        <div className="text-center py-20 bg-muted/20 rounded-lg border border-dashed">
-          <p className="text-muted-foreground">No history found.</p>
-          <p className="text-sm text-muted-foreground mt-1">Analyze some Kanji to see your history here.</p>
+        <div className="text-center py-24 bg-white border-2 border-dashed border-slate-200 rounded-[40px] space-y-6">
+          <div className="size-20 bg-slate-50 rounded-3xl flex items-center justify-center mx-auto">
+            <Search className="size-10 text-slate-300" />
+          </div>
+          <div className="space-y-2">
+            <p className="text-sm font-black text-slate-900">검색 결과가 없습니다.</p>
+            <p className="text-xs text-slate-400 font-medium">새로운 단어를 분석하거나 검색어를 확인해보세요.</p>
+          </div>
         </div>
       )}
     </div>
   )
 }
+
