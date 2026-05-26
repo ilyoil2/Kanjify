@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react"
-import { ChevronLeft, ChevronRight, Trash2, Search, ExternalLink, Calendar } from "lucide-react"
+import { useState, useMemo, useEffect } from "react"
+import { ChevronLeft, ChevronRight, Trash2, Search, ExternalLink, Calendar, Volume2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
@@ -25,6 +25,40 @@ export function HistoryPage({ history, onDeleteEntry, onClearHistory, onReAnalyz
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set())
   const [searchTerm, setSearchTerm] = useState("")
+
+  // 발음 재생 함수 (Web Speech API 최적화 - Mac 고품질 음성 우선)
+  const playPronunciation = (text: string) => {
+    if (!window.speechSynthesis) {
+      toast.error("이 브라우저는 음성 재생을 지원하지 않습니다.")
+      return
+    }
+
+    window.speechSynthesis.cancel()
+    const utterance = new SpeechSynthesisUtterance(text)
+    const voices = window.speechSynthesis.getVoices()
+    
+    const preferredVoice = 
+      voices.find(v => v.name.includes("Kyoko")) || 
+      voices.find(v => v.name.includes("Otoya")) || 
+      voices.find(v => v.lang === "ja-JP" || v.lang === "ja_JP")
+
+    if (preferredVoice) {
+      utterance.voice = preferredVoice
+    }
+    
+    utterance.lang = "ja-JP"
+    utterance.rate = 0.9
+    utterance.pitch = 1.0
+
+    window.speechSynthesis.speak(utterance)
+  }
+
+  // 목소리 목록이 로드되지 않았을 때를 대비해 더미 호출
+  useEffect(() => {
+    if (window.speechSynthesis.onvoiceschanged !== undefined) {
+      window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices()
+    }
+  }, [])
 
   // Filter history based on search term
   const filteredHistory = useMemo(() => {
@@ -140,11 +174,22 @@ export function HistoryPage({ history, onDeleteEntry, onClearHistory, onReAnalyz
                 />
                 
                 <div className="flex-1 min-w-0 flex items-center gap-8">
-                  {/* 단어 */}
-                  <div className="shrink-0 min-w-[80px]">
+                  {/* 단어 및 발음 버튼 */}
+                  <div className="shrink-0 min-w-[120px] flex items-center gap-3">
                     <span className="text-3xl font-black text-slate-900 tracking-tight">
                       {item.word}
                     </span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-8 rounded-full hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        playPronunciation(item.word)
+                      }}
+                    >
+                      <Volume2 className="size-4" />
+                    </Button>
                   </div>
 
                   {/* 뜻 (한자 바로 옆) */}
