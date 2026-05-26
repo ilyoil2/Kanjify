@@ -1,10 +1,16 @@
-import { Lightbulb, Info, ChevronRight, Hash } from "lucide-react"
+import { ChevronRight, Hash, BookOpen, AlertCircle } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 
 export interface KanjiNode {
   reading: string
   meaning: string
   components: string[]
+}
+
+export interface Example {
+  sentence: string
+  reading: string
+  meaning: string
 }
 
 export interface WordInfo {
@@ -15,8 +21,8 @@ export interface WordInfo {
 
 export interface KanjiRecursiveData {
   word_info?: WordInfo
+  examples?: Example[]
   nodes: Record<string, KanjiNode>
-  origin: Record<string, string>
   confidence: "high" | "low"
 }
 
@@ -30,7 +36,7 @@ function RecursiveComponent({
   isRoot?: boolean
 }) {
   const node = nodes[char]
-  if (!node) return <div className="p-2 border rounded bg-red-50 text-red-500">정보 없음: {char}</div>
+  if (!node) return <div className="p-2 border rounded bg-red-50 text-red-500 text-[10px]">정보 없음: {char}</div>
 
   return (
     <div className={`flex flex-col ${isRoot ? "" : "ml-6 mt-2 border-l-2 border-blue-100 pl-4"}`}>
@@ -51,7 +57,7 @@ function RecursiveComponent({
           </div>
           {node.components.length === 0 && (
             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
-              기본 구성요소 (더 이상 분해 불가)
+              기본 구성요소
             </span>
           )}
         </div>
@@ -69,7 +75,6 @@ function RecursiveComponent({
 }
 
 export function KanjiRecursiveResult({ data, word }: { data: KanjiRecursiveData, word: string }) {
-  // 입력된 단어의 각 글자가 nodes에 있는지 확인 (루트 노드들)
   const rootChars = Array.from(word).filter(c => data.nodes[c])
 
   return (
@@ -100,15 +105,9 @@ export function KanjiRecursiveResult({ data, word }: { data: KanjiRecursiveData,
                 <div className="flex gap-4">
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary" className="bg-blue-400/20 text-blue-100 border-none font-bold text-[10px]">
-                      히라가나
+                      발음
                     </Badge>
                     <span className="text-sm font-medium text-blue-50">{data.word_info.reading_hiragana}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="bg-blue-400/20 text-blue-100 border-none font-bold text-[10px]">
-                      가타카나
-                    </Badge>
-                    <span className="text-sm font-medium text-blue-50">{data.word_info.reading_katakana}</span>
                   </div>
                 </div>
               </div>
@@ -127,8 +126,8 @@ export function KanjiRecursiveResult({ data, word }: { data: KanjiRecursiveData,
         </div>
       </div>
 
-      {/* 2. 계층 구조 섹션 */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* 2. 계층 구조 섹션 (좌측 2/3) */}
         <div className="lg:col-span-2 space-y-4">
           <div className="flex items-center gap-3 px-2">
             <div className="size-8 rounded-lg bg-blue-50 flex items-center justify-center">
@@ -146,38 +145,40 @@ export function KanjiRecursiveResult({ data, word }: { data: KanjiRecursiveData,
           </div>
         </div>
 
-        {/* 3. 유래 및 정보 */}
-        <div className="space-y-6">
+        {/* 3. 실용 예문 섹션 (우측 1/3) */}
+        <div className="space-y-4">
           <div className="flex items-center gap-3 px-2">
-            <div className="size-8 rounded-lg bg-yellow-50 flex items-center justify-center">
-              <Info className="size-4 text-yellow-600" />
+            <div className="size-8 rounded-lg bg-green-50 flex items-center justify-center">
+              <BookOpen className="size-4 text-green-600" />
             </div>
-            <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest">단어 유래 및 힌트</h3>
+            <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest">실용 예문 (3)</h3>
           </div>
-
-          <div className="space-y-4">
-            {Object.entries(data.origin).map(([char, text]) => (
-              <div key={`origin-${char}`} className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm group hover:border-yellow-200 transition-all">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-lg font-black text-gray-900">{char}</span>
-                  <div className="h-[1px] flex-1 bg-gray-50 group-hover:bg-yellow-50" />
+          
+          <div className="grid grid-cols-1 gap-4">
+            {data.examples && data.examples.length > 0 ? (
+              data.examples.slice(0, 3).map((ex, idx) => (
+                <div key={idx} className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm hover:border-green-200 transition-all group">
+                  <div className="space-y-2">
+                    <p className="text-base font-bold text-slate-800 tracking-tight group-hover:text-green-700 transition-colors">
+                      {ex.sentence}
+                    </p>
+                    <p className="text-[11px] text-slate-400 font-medium">
+                      {ex.reading}
+                    </p>
+                    <div className="pt-2 border-t border-slate-50">
+                      <p className="text-xs font-bold text-slate-600">
+                        {ex.meaning}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex gap-3">
-                  <Lightbulb className="size-4 text-yellow-500 shrink-0 mt-0.5" />
-                  <p className="text-xs leading-relaxed text-gray-600 font-medium">
-                    {text}
-                  </p>
-                </div>
-              </div>
-            ))}
-            
-            {data.confidence === "low" && (
-              <div className="bg-red-50 border border-red-100 rounded-2xl p-4 flex gap-3">
-                <div className="size-5 rounded-full bg-red-100 flex items-center justify-center shrink-0">
-                  <span className="text-[10px] font-bold text-red-600">!</span>
-                </div>
-                <p className="text-[10px] text-red-700 font-medium leading-tight">
-                  이 결과는 AI가 추정한 내용으로, 일부 정보가 정확하지 않을 수 있습니다.
+              ))
+            ) : (
+              <div className="bg-white border border-dashed border-slate-200 rounded-2xl p-8 text-center space-y-3">
+                <AlertCircle className="size-8 text-slate-300 mx-auto" />
+                <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                  이전에 분석한 단어라 예문이 없습니다.<br/>
+                  <span className="text-blue-600 font-bold">새로운 단어</span>를 입력하시면<br/>예문을 보실 수 있습니다!
                 </p>
               </div>
             )}
@@ -187,3 +188,6 @@ export function KanjiRecursiveResult({ data, word }: { data: KanjiRecursiveData,
     </div>
   )
 }
+
+
+
