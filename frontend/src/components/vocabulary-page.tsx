@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { ChevronLeft, ChevronRight, Eye, EyeOff, Loader2, Volume2 } from "lucide-react"
+import { ChevronLeft, ChevronRight, Eye, EyeOff, Loader2, Volume2, Clock, CalendarClock, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "sonner"
@@ -194,29 +194,36 @@ export function VocabularyPage() {
 
         <div className="flex items-center gap-2">
           {checkedItems.size > 0 && (
-            <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-2 duration-300">
+            <div className="flex items-center gap-1.5 p-1 bg-white border border-slate-200 rounded-2xl shadow-xl shadow-slate-200/50 animate-in zoom-in-95 duration-300">
+              <div className="px-3 py-1 bg-slate-50 rounded-xl flex items-center gap-2 border border-slate-100">
+                <CheckCircle2 className="size-3.5 text-blue-600" />
+                <span className="text-xs font-black text-slate-700">{checkedItems.size}</span>
+              </div>
+              <div className="w-[1px] h-4 bg-slate-200 mx-1" />
               <Button 
-                variant="outline" 
+                variant="ghost" 
                 size="sm"
-                className="bg-yellow-50 hover:bg-yellow-100 text-yellow-700 border-yellow-200 font-bold rounded-full px-4 h-9"
+                className="bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold rounded-xl px-4 h-9 gap-2 border border-amber-100 transition-all hover:scale-[1.02] active:scale-95"
                 onClick={() => handleHideItems(5)}
               >
-                5일 숨기기
+                <Clock className="size-3.5" />
+                5 Days
               </Button>
               <Button 
-                variant="outline" 
+                variant="ghost" 
                 size="sm"
-                className="bg-red-50 hover:bg-red-100 text-red-700 border-red-200 font-bold rounded-full px-4 h-9"
+                className="bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold rounded-xl px-4 h-9 gap-2 border border-rose-100 transition-all hover:scale-[1.02] active:scale-95"
                 onClick={() => handleHideItems(10)}
               >
-                10일 숨기기
+                <CalendarClock className="size-3.5" />
+                10 Days
               </Button>
             </div>
           )}
           <Button
             variant={hideDetails ? "default" : "outline"}
             size="icon"
-            className="size-9 rounded-xl"
+            className="size-10 rounded-2xl border-slate-200 shadow-sm transition-all hover:border-blue-400"
             onClick={() => setHideDetails(!hideDetails)}
             title={hideDetails ? "Show all details" : "Hide details (Kanji only)"}
           >
