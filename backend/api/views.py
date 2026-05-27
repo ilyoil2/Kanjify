@@ -1,5 +1,5 @@
-import threading
-import traceback
+from django.db import models
+from django.db.models import Q
 from datetime import timedelta
 from django.utils import timezone
 from django.contrib.auth.hashers import make_password, check_password
@@ -12,12 +12,13 @@ from .ai_utils import analyze_kanji
 
 class VocabularyViewSet(viewsets.ModelViewSet):
     serializer_class = VocabularySerializer
+    queryset = Vocabulary.objects.all()
 
     def get_queryset(self):
         # 현재 시간 기준으로 hidden_until이 지났거나 없는 것만 반환
         now = timezone.now()
         return Vocabulary.objects.filter(
-            models.Q(hidden_until__isnull=True) | models.Q(hidden_until__lte=now)
+            Q(hidden_until__isnull=True) | Q(hidden_until__lte=now)
         ).order_by('-created_at')
 
     @action(detail=False, methods=['post'])
