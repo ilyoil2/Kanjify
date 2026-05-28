@@ -77,3 +77,27 @@ class SearchHistory(models.Model):
     class Meta:
         db_table = 'tbl_search_history'
         ordering = ['-created_at']
+
+class WordButton(models.Model):
+    user = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name='buttons'
+    )
+    hide_days = models.IntegerField(null=True, blank=True)
+    color = models.CharField(max_length=20, default='blue')
+
+    class Meta:
+        db_table = 'tbl_word_button'
+
+class WordStatus(models.Model):
+    vocabulary = models.OneToOneField(
+        Vocabulary, on_delete=models.CASCADE, related_name='status'
+    )
+    button = models.ForeignKey(
+        WordButton, on_delete=models.SET_NULL, null=True, related_name='word_statuses'
+    )
+    hidden_until = models.DateTimeField(null=True, blank=True)  # null = 영구 숨김
+    is_active = models.BooleanField(default=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'tbl_word_status'
