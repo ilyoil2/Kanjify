@@ -123,3 +123,20 @@
     @apply bg-background text-foreground;
   }
 }
+
+@keyframes gradient-flow {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.btn-gradient {
+  background: linear-gradient(135deg, #3B82F6, #a78bfa, #6366f1, #3B82F6);
+  background-size: 300% 300%;
+  animation: gradient-flow 4s ease infinite;
+}
+
+.btn-gradient:disabled {
+  background: #d1d5db;
+  animation: none;
+}
