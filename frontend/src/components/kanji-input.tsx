@@ -59,7 +59,11 @@ export function KanjiInput({ onSubmit, isLoading = false, userEmail }: KanjiInpu
           <button
             type="submit"
             disabled={!isValidInput || isLoading}
-            className="btn-gradient w-full h-11 rounded-md font-medium text-sm text-white flex items-center justify-center gap-2 transition-opacity duration-200 disabled:cursor-not-allowed hover:opacity-90 active:scale-[0.99]"
+            className={`w-full h-11 rounded-md font-medium text-sm flex items-center justify-center gap-2 transition-all duration-200 active:scale-[0.99] ${
+              isValidInput && !isLoading
+                ? "btn-gradient text-white hover:opacity-90 cursor-pointer"
+                : "bg-slate-100 text-slate-400 cursor-not-allowed"
+            }`}
           >
             <Search className="size-4" />
             {isLoading ? "Analyzing..." : "Analyze Kanji"}

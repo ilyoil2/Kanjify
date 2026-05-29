@@ -136,7 +136,3 @@
   animation: gradient-flow 4s ease infinite;
 }
 
-.btn-gradient:disabled {
-  background: #d1d5db;
-  animation: none;
-}
