@@ -24,11 +24,23 @@ export function Navbar({ activeTab, onTabChange, user, onLogout, onSettingsClick
       <div className="mx-auto max-w-5xl px-1 sm:px-4">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <div className="flex-shrink-0">
-            <span className="text-xl font-bold text-foreground">
-              漢字<span className="text-primary">Learn</span>
+          <button
+            onClick={() => onTabChange("main")}
+            className="flex-shrink-0 flex items-center gap-2.5 group"
+          >
+            <div
+              className="size-8 rounded-xl flex items-center justify-center shadow-md group-hover:scale-105 transition-transform duration-200"
+              style={{ background: "linear-gradient(135deg, #3B82F6 0%, #a78bfa 100%)" }}
+            >
+              <span className="text-white font-black text-sm leading-none">K</span>
+            </div>
+            <span
+              className="text-xl font-black tracking-tight bg-clip-text text-transparent"
+              style={{ backgroundImage: "linear-gradient(135deg, #3B82F6 0%, #a78bfa 100%)" }}
+            >
+              Kanjify
             </span>
-          </div>
+          </button>
 
           {/* Navigation Tabs */}
           <nav className="flex items-center gap-1 rounded-lg bg-muted p-1">

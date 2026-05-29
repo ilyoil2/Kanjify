@@ -404,7 +404,8 @@ export default function KanjiDashboard({ user, onLogout, currentPath, navigateTo
         <Button
           variant="default"
           size="icon"
-          className="h-16 w-16 rounded-3xl shadow-2xl bg-blue-600 hover:bg-blue-700 hover:scale-110 active:scale-95 transition-all group"
+          className="h-16 w-16 rounded-3xl shadow-2xl hover:scale-110 active:scale-95 transition-all group border-0"
+          style={{ background: "linear-gradient(135deg, #3B82F6 0%, #a78bfa 100%)" }}
           onClick={() => setIsSidebarOpen(true)}
         >
           <Sparkles className="h-7 w-7 text-white group-hover:animate-slow-spin" />
