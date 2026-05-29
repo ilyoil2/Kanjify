@@ -9,7 +9,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog"
-import { Plus, Pencil, Trash2 } from "lucide-react"
+import { Plus, Pencil, Trash2, RotateCcw } from "lucide-react"
 import { toast } from "sonner"
 
 interface WordButton {
@@ -25,6 +25,91 @@ interface ButtonFormData {
   hide_days: string
 }
 
+interface VocabularyInfo {
+  id: number
+  kanji: string
+  reading: string
+  meaning_ko: string
+}
+
+interface WordStatus {
+  id: number
+  vocabulary: VocabularyInfo
+  hidden_until: string | null
+}
+
+function ButtonWordList({
+  button,
+  onRestore,
+}: {
+  button: WordButton
+  onRestore: () => void
+}) {
+  const [statuses, setStatuses] = useState<WordStatus[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  const fetchStatuses = async () => {
+    setIsLoading(true)
+    const res = await fetch(`http://localhost:8002/api/word-status/?button_id=${button.id}`)
+    setStatuses(await res.json())
+    setIsLoading(false)
+  }
+
+  useEffect(() => {
+    fetchStatuses()
+  }, [button.id])
+
+  const handleRestore = async (statusId: number) => {
+    try {
+      const res = await fetch(`http://localhost:8002/api/word-status/${statusId}/restore/`, {
+        method: "POST",
+      })
+      if (!res.ok) throw new Error()
+      toast.success("복구되었습니다.")
+      fetchStatuses()
+      onRestore()
+    } catch {
+      toast.error("복구 중 오류가 발생했습니다.")
+    }
+  }
+
+  if (isLoading) return <div className="py-4 text-sm text-muted-foreground">불러오는 중...</div>
+
+  if (statuses.length === 0) {
+    return (
+      <div className="py-4 text-sm text-muted-foreground text-center border border-dashed rounded-lg">
+        이 그룹에 단어가 없습니다.
+      </div>
+    )
+  }
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+      {statuses.map((ws) => (
+        <div
+          key={ws.id}
+          className="flex items-center justify-between px-4 py-3 bg-card border border-border rounded-md"
+        >
+          <div className="flex items-center gap-4 min-w-0">
+            <span className="font-bold text-lg shrink-0">{ws.vocabulary.kanji}</span>
+            <span className="text-sm text-muted-foreground shrink-0">{ws.vocabulary.reading}</span>
+            <span className="text-sm truncate">{ws.vocabulary.meaning_ko}</span>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            className="shrink-0 ml-2"
+            onClick={() => handleRestore(ws.id)}
+          >
+            <RotateCcw className="size-3.5 mr-1" />
+            복구
+          </Button>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export function SettingsPage() {
   const [buttons, setButtons] = useState<WordButton[]>([])
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -34,6 +119,7 @@ export function SettingsPage() {
     color: "#3B82F6",
     hide_days: "",
   })
+  const [refreshKey, setRefreshKey] = useState(0)
 
   const fetchButtons = async () => {
     const res = await fetch("http://localhost:8002/api/buttons/")
@@ -106,11 +192,12 @@ export function SettingsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-10">
       <div>
         <h1 className="text-2xl font-black text-slate-900">Settings</h1>
       </div>
 
+      {/* 버튼 관리 */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">
@@ -144,12 +231,7 @@ export function SettingsPage() {
                   </span>
                 </div>
                 <div className="flex gap-1">
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="size-8"
-                    onClick={() => openEdit(btn)}
-                  >
+                  <Button size="icon" variant="ghost" className="size-8" onClick={() => openEdit(btn)}>
                     <Pencil className="size-4" />
                   </Button>
                   <Button
@@ -166,6 +248,19 @@ export function SettingsPage() {
           </div>
         )}
       </div>
+
+      {/* 버튼별 단어 목록 */}
+      {buttons.map((btn) => (
+        <div key={`${btn.id}-${refreshKey}`} className="space-y-3">
+          <div className="flex items-center gap-2">
+            <div className="size-3 rounded-full shrink-0" style={{ backgroundColor: btn.color }} />
+            <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">
+              {btn.name}
+            </h2>
+          </div>
+          <ButtonWordList button={btn} onRestore={() => setRefreshKey((k) => k + 1)} />
+        </div>
+      ))}
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="rounded-2xl sm:max-w-md">
