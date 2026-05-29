@@ -1,6 +1,6 @@
 
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
@@ -14,6 +14,27 @@ interface KanjiInputProps {
 
 export function KanjiInput({ onSubmit, isLoading = false, userEmail }: KanjiInputProps) {
   const [inputValue, setInputValue] = useState("")
+
+  useEffect(() => {
+    const style = document.createElement("style")
+    style.textContent = `
+      @keyframes kanjify-gradient {
+        0%   { background-position: 0% 50%; }
+        50%  { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+      }
+      .kanjify-btn {
+        background: linear-gradient(135deg, #3B82F6, #a78bfa, #818cf8, #3B82F6);
+        background-size: 300% 300%;
+        animation: kanjify-gradient 3s ease infinite;
+        color: white;
+        cursor: pointer;
+      }
+      .kanjify-btn:hover { opacity: 0.9; }
+    `
+    document.head.appendChild(style)
+    return () => { document.head.removeChild(style) }
+  }, [])
 
   // 한자, 히라가나, 가타카나 및 일부 문장 부호만 허용 (한글, 영어 제외)
   const isInvalid = /[a-zA-Zㄱ-ㅎㅏ-ㅣ가-힣]/.test(inputValue)
@@ -59,10 +80,12 @@ export function KanjiInput({ onSubmit, isLoading = false, userEmail }: KanjiInpu
           <button
             type="submit"
             disabled={!isValidInput || isLoading}
-            className="w-full h-11 rounded-md font-medium text-sm flex items-center justify-center gap-2 transition-opacity duration-200 active:scale-[0.99]"
+            className={`w-full h-11 rounded-md font-medium text-sm flex items-center justify-center gap-2 active:scale-[0.99] ${
+              isValidInput && !isLoading ? "kanjify-btn" : ""
+            }`}
             style={
               isValidInput && !isLoading
-                ? { background: "linear-gradient(135deg, #3B82F6 0%, #a78bfa 100%)", color: "white", cursor: "pointer" }
+                ? undefined
                 : { background: "#e2e8f0", color: "#94a3b8", cursor: "not-allowed" }
             }
           >
