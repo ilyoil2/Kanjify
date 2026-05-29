@@ -56,14 +56,15 @@ export function KanjiInput({ onSubmit, isLoading = false, userEmail }: KanjiInpu
               </p>
             </div>
           </div>
-          <Button
+          <button
             type="submit"
-            className="w-full h-11 transition-all duration-200"
             disabled={!isValidInput || isLoading}
+            className="w-full h-11 rounded-md font-medium text-sm text-white flex items-center justify-center gap-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 active:scale-[0.99]"
+            style={{ background: "conic-gradient(from 120deg at 40% 60%, #3B82F6, #f9a8d4, #3B82F6)" }}
           >
-            <Search className="mr-2 size-4" />
+            <Search className="size-4" />
             {isLoading ? "Analyzing..." : "Analyze Kanji"}
-          </Button>
+          </button>
         </form>
       </CardContent>
     </Card>

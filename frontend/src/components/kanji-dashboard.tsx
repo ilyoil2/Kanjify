@@ -271,7 +271,14 @@ export default function KanjiDashboard({ user, onLogout, currentPath, navigateTo
                 <div className="space-y-8">
                   <div className="text-center space-y-3">
                     <h1 className="text-5xl font-black tracking-tighter text-slate-900">
-                      Kanjify <span className="text-blue-600">Deep</span> Analysis
+                      Kanjify{" "}
+                      <span
+                        className="bg-clip-text text-transparent"
+                        style={{ backgroundImage: "linear-gradient(135deg, #3B82F6 0%, #a78bfa 100%)" }}
+                      >
+                        Deep
+                      </span>{" "}
+                      Analysis
                     </h1>
                     <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.5em]">
                       AI-Powered Recursive Kanji Breakdown
