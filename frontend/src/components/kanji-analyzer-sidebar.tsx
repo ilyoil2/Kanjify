@@ -19,8 +19,8 @@ export function KanjiAnalyzerSidebar({ isOpen, onClose }: KanjiAnalyzerSidebarPr
       {/* Header */}
       <div className="flex items-center justify-between p-6 border-b">
         <div className="flex items-center gap-2">
-          <div className="p-2 bg-primary/10 rounded-lg">
-            <Sparkles className="w-5 h-5 text-primary" />
+          <div className="p-2 rounded-lg" style={{ background: "linear-gradient(135deg, #3B82F6 0%, #10b981 100%)" }}>
+            <Sparkles className="w-5 h-5 text-white" />
           </div>
           <div>
             <h2 className="text-lg font-semibold tracking-tight">AI Analyzer</h2>
@@ -63,8 +63,8 @@ export function KanjiAnalyzerSidebar({ isOpen, onClose }: KanjiAnalyzerSidebarPr
 
       {/* Footer Hint */}
       <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-background to-transparent">
-        <div className="p-4 bg-primary/5 rounded-xl border border-primary/10">
-          <p className="text-xs text-primary/80 leading-relaxed">
+        <div className="p-4 rounded-xl" style={{ background: "linear-gradient(135deg, #3B82F615 0%, #10b98115 100%)", border: "1px solid #10b98130" }}>
+          <p className="text-xs leading-relaxed" style={{ color: "#10b981" }}>
             Tip: You can enter multiple kanji to see a combined analysis of the word.
           </p>
         </div>
