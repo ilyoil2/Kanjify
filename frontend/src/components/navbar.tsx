@@ -1,6 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { LogOut, User, Settings } from "lucide-react"
+import { LogOut, User, Settings, ChevronDown } from "lucide-react"
 
 interface NavbarProps {
   activeTab: string
@@ -63,15 +63,16 @@ export function Navbar({ activeTab, onTabChange, user, onLogout, onSettingsClick
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <div className="flex items-center gap-2.5 rounded-full px-3 py-1.5 cursor-pointer transition-colors duration-200 hover:bg-muted">
-                <span className="text-sm font-medium text-foreground hidden sm:block">
-                  {user?.username || "Guest User"}
-                </span>
-                <Avatar className="size-8 border border-border shadow-sm">
+                <Avatar className="size-8 border border-border shadow-sm shrink-0">
                   <AvatarImage src="" alt="User" />
                   <AvatarFallback className="bg-primary text-primary-foreground text-sm font-bold">
                     {userInitial}
                   </AvatarFallback>
                 </Avatar>
+                <span className="text-sm font-medium text-foreground hidden sm:block">
+                  {user?.username || "Guest User"}
+                </span>
+                <ChevronDown className="size-4 text-muted-foreground hidden sm:block" />
               </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56 rounded-xl shadow-xl border-border">
