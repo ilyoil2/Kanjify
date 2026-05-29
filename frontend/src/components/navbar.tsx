@@ -1,21 +1,20 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { LogOut, User } from "lucide-react"
+import { LogOut, User, Settings } from "lucide-react"
 
 interface NavbarProps {
   activeTab: string
   onTabChange: (tab: string) => void
   user: { username: string, email: string } | null
   onLogout: () => void
+  onSettingsClick: () => void
 }
 
-export function Navbar({ activeTab, onTabChange, user, onLogout }: NavbarProps) {
+export function Navbar({ activeTab, onTabChange, user, onLogout, onSettingsClick }: NavbarProps) {
   const tabs = [
     { id: "main", label: "Main" },
     { id: "history", label: "History" },
     { id: "vocabulary", label: "Vocabulary" },
-    { id: "archive", label: "Archive" },
-    { id: "settings", label: "Settings" },
   ]
 
   const userInitial = user?.username ? user.username.charAt(0).toUpperCase() : "G"
@@ -74,6 +73,13 @@ export function Navbar({ activeTab, onTabChange, user, onLogout }: NavbarProps) 
               <DropdownMenuItem className="focus:bg-muted cursor-pointer font-medium py-2 rounded-lg">
                 <User className="mr-2 size-4" />
                 <span>Profile</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={onSettingsClick}
+                className="focus:bg-muted cursor-pointer font-medium py-2 rounded-lg"
+              >
+                <Settings className="mr-2 size-4" />
+                <span>Settings</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem 

@@ -2,6 +2,8 @@ import { useState, useEffect } from "react"
 import { ChevronLeft, ChevronRight, Eye, EyeOff, Loader2, Volume2, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import { ArchivePage } from "@/components/archive-page"
 import { toast } from "sonner"
 
 interface WordButton {
@@ -191,6 +193,17 @@ export function VocabularyPage({ userEmail }: { userEmail?: string }) {
   }
 
   return (
+    <Tabs defaultValue="vocabulary" className="space-y-4">
+      <TabsList>
+        <TabsTrigger value="vocabulary">단어장</TabsTrigger>
+        <TabsTrigger value="archive">아카이브</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="archive">
+        <ArchivePage />
+      </TabsContent>
+
+      <TabsContent value="vocabulary">
     <div className="space-y-4">
       {/* Header Actions */}
       <div className="flex flex-col md:flex-row items-center justify-between gap-4">
@@ -368,5 +381,7 @@ export function VocabularyPage({ userEmail }: { userEmail?: string }) {
         </div>
       )}
     </div>
+      </TabsContent>
+    </Tabs>
   )
 }

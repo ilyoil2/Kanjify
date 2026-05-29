@@ -5,7 +5,6 @@ import { KanjiInput } from "@/components/kanji-input"
 import { KanjiRecursiveResult, type KanjiRecursiveData } from "@/components/kanji-recursive-result"
 import { HistoryPage } from "@/components/history-page"
 import { VocabularyPage } from "@/components/vocabulary-page"
-import { ArchivePage } from "@/components/archive-page"
 import { SettingsPage } from "@/components/settings-page"
 import { KanjiAnalyzerSidebar } from "@/components/kanji-analyzer-sidebar"
 import { Button } from "@/components/ui/button"
@@ -52,7 +51,6 @@ export default function KanjiDashboard({ user, onLogout, currentPath, navigateTo
     if (currentPath === "/") setActiveTab("main")
     else if (currentPath === "/history") setActiveTab("history")
     else if (currentPath === "/vocabulary") setActiveTab("vocabulary")
-    else if (currentPath === "/archive") setActiveTab("archive")
     else if (currentPath === "/settings") setActiveTab("settings")
   }, [currentPath])
 
@@ -212,7 +210,7 @@ export default function KanjiDashboard({ user, onLogout, currentPath, navigateTo
 
   return (
     <div className="min-h-screen bg-slate-50 relative flex flex-col font-sans antialiased text-gray-900">
-      <Navbar activeTab={activeTab} onTabChange={handleTabChange} user={user} onLogout={onLogout} />
+      <Navbar activeTab={activeTab} onTabChange={handleTabChange} user={user} onLogout={onLogout} onSettingsClick={() => handleTabChange("settings")} />
 
       <div className="flex-1 flex pt-16 h-[calc(100vh-64px)] overflow-hidden">
         {activeTab === "main" ? (
@@ -394,8 +392,6 @@ export default function KanjiDashboard({ user, onLogout, currentPath, navigateTo
                 </>
               ) : activeTab === "vocabulary" ? (
                 <VocabularyPage />
-              ) : activeTab === "archive" ? (
-                <ArchivePage />
               ) : activeTab === "settings" ? (
                 <SettingsPage />
               ) : null}
