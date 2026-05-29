@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gradient Preview</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f0f13;
+      color: #fff;
+      padding: 48px 32px;
+    }
+
+    h1 {
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      color: #555;
+      margin-bottom: 48px;
+    }
+
+    .section {
+      margin-bottom: 64px;
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: #444;
+      margin-bottom: 16px;
+    }
+
+    .row {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .card {
+      width: 180px;
+      height: 110px;
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: flex-end;
+      padding: 14px 16px;
+      position: relative;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .card-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      opacity: .75;
+      color: #fff;
+      text-shadow: 0 1px 4px rgba(0,0,0,.4);
+    }
+
+    /* ─────────── 파랑 + 연보라 ─────────── */
+    .bp1 { background: linear-gradient(90deg, #3B82F6 0%, #a78bfa 100%); }
+    .bp2 { background: linear-gradient(135deg, #2563eb 0%, #c4b5fd 100%); }
+    .bp3 { background: radial-gradient(circle at 30% 50%, #3B82F6 0%, #7c3aed 100%); }
+    .bp4 { background: linear-gradient(180deg, #6366f1 0%, #3B82F6 50%, #a78bfa 100%); }
+    .bp5 { background: conic-gradient(from 200deg at 60% 40%, #3B82F6, #a78bfa, #3B82F6); }
+
+    /* ─────────── 파랑 + 연핑크 ─────────── */
+    .bk1 { background: linear-gradient(90deg, #3B82F6 0%, #f9a8d4 100%); }
+    .bk2 { background: linear-gradient(135deg, #1d4ed8 0%, #fbcfe8 100%); }
+    .bk3 { background: radial-gradient(circle at 70% 30%, #f472b6 0%, #3B82F6 100%); }
+    .bk4 { background: linear-gradient(160deg, #3B82F6 0%, #ec4899 100%); }
+    .bk5 { background: conic-gradient(from 120deg at 40% 60%, #3B82F6, #f9a8d4, #3B82F6); }
+
+    /* ─────────── 파랑 + 주황 ─────────── */
+    .bo1 { background: linear-gradient(90deg, #1d4ed8 0%, #f97316 100%); }
+    .bo2 { background: linear-gradient(135deg, #3B82F6 0%, #fb923c 100%); }
+    .bo3 { background: radial-gradient(circle at 25% 75%, #f97316 0%, #1d4ed8 100%); }
+    .bo4 { background: linear-gradient(160deg, #3B82F6 30%, #f97316 100%); }
+    .bo5 { background: conic-gradient(from 160deg at 50% 50%, #1d4ed8, #fb923c, #1d4ed8); }
+
+    /* ─────────── 파랑 + 초록 ─────────── */
+    .bg1 { background: linear-gradient(90deg, #2563eb 0%, #34d399 100%); }
+    .bg2 { background: linear-gradient(135deg, #3B82F6 0%, #10b981 100%); }
+    .bg3 { background: radial-gradient(circle at 80% 20%, #34d399 0%, #1d4ed8 100%); }
+    .bg4 { background: linear-gradient(160deg, #3B82F6 0%, #059669 100%); }
+    .bg5 { background: conic-gradient(from 240deg at 30% 70%, #2563eb, #34d399, #2563eb); }
+
+    /* ─────────── 파랑 + 하양 ─────────── */
+    .bw1 { background: linear-gradient(90deg, #1d4ed8 0%, #e0f2fe 100%); }
+    .bw2 { background: linear-gradient(135deg, #3B82F6 0%, #f0f9ff 100%); }
+    .bw3 { background: radial-gradient(circle at 50% 0%, #fff 0%, #2563eb 100%); }
+    .bw4 { background: linear-gradient(180deg, #fff 0%, #3B82F6 100%); }
+    .bw5 { background: conic-gradient(from 180deg at 50% 100%, #1d4ed8, #e0f2fe, #1d4ed8); }
+    .bw1 .card-label, .bw2 .card-label { color: #1d4ed8; text-shadow: none; }
+    .bw4 .card-label { color: #1d4ed8; text-shadow: none; }
+
+    /* ─────────── 파랑 + 검정 ─────────── */
+    .bb1 { background: linear-gradient(90deg, #3B82F6 0%, #0a0a0a 100%); }
+    .bb2 { background: linear-gradient(135deg, #1d4ed8 0%, #111 100%); }
+    .bb3 { background: radial-gradient(circle at 30% 30%, #3B82F6 0%, #000 100%); }
+    .bb4 { background: linear-gradient(180deg, #000 0%, #1d4ed8 100%); }
+    .bb5 { background: conic-gradient(from 280deg at 60% 40%, #3B82F6, #000, #3B82F6); }
+
+    .style-label {
+      font-size: 9.5px;
+      font-weight: 600;
+      color: #333;
+      margin-top: 8px;
+      text-align: center;
+      width: 180px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Gradient Preview — 파랑 기반</h1>
+
+  <!-- 파랑 + 연보라 -->
+  <div class="section">
+    <div class="section-title">파랑 + 연보라</div>
+    <div class="row">
+      <div><div class="card bp1"><span class="card-label">← 수평</span></div><div class="style-label">linear 수평</div></div>
+      <div><div class="card bp2"><span class="card-label">↘ 대각</span></div><div class="style-label">linear 135°</div></div>
+      <div><div class="card bp3"><span class="card-label">● 방사형</span></div><div class="style-label">radial</div></div>
+      <div><div class="card bp4"><span class="card-label">↕ 3단계</span></div><div class="style-label">linear 3-stop</div></div>
+      <div><div class="card bp5"><span class="card-label">⟳ 원뿔</span></div><div class="style-label">conic</div></div>
+    </div>
+  </div>
+
+  <!-- 파랑 + 연핑크 -->
+  <div class="section">
+    <div class="section-title">파랑 + 연핑크</div>
+    <div class="row">
+      <div><div class="card bk1"><span class="card-label">← 수평</span></div><div class="style-label">linear 수평</div></div>
+      <div><div class="card bk2"><span class="card-label">↘ 대각</span></div><div class="style-label">linear 135°</div></div>
+      <div><div class="card bk3"><span class="card-label">● 방사형</span></div><div class="style-label">radial</div></div>
+      <div><div class="card bk4"><span class="card-label">↗ 160°</span></div><div class="style-label">linear 160°</div></div>
+      <div><div class="card bk5"><span class="card-label">⟳ 원뿔</span></div><div class="style-label">conic</div></div>
+    </div>
+  </div>
+
+  <!-- 파랑 + 주황 -->
+  <div class="section">
+    <div class="section-title">파랑 + 주황</div>
+    <div class="row">
+      <div><div class="card bo1"><span class="card-label">← 수평</span></div><div class="style-label">linear 수평</div></div>
+      <div><div class="card bo2"><span class="card-label">↘ 대각</span></div><div class="style-label">linear 135°</div></div>
+      <div><div class="card bo3"><span class="card-label">● 방사형</span></div><div class="style-label">radial</div></div>
+      <div><div class="card bo4"><span class="card-label">↗ 160°</span></div><div class="style-label">linear 160°</div></div>
+      <div><div class="card bo5"><span class="card-label">⟳ 원뿔</span></div><div class="style-label">conic</div></div>
+    </div>
+  </div>
+
+  <!-- 파랑 + 초록 -->
+  <div class="section">
+    <div class="section-title">파랑 + 초록</div>
+    <div class="row">
+      <div><div class="card bg1"><span class="card-label">← 수평</span></div><div class="style-label">linear 수평</div></div>
+      <div><div class="card bg2"><span class="card-label">↘ 대각</span></div><div class="style-label">linear 135°</div></div>
+      <div><div class="card bg3"><span class="card-label">● 방사형</span></div><div class="style-label">radial</div></div>
+      <div><div class="card bg4"><span class="card-label">↗ 160°</span></div><div class="style-label">linear 160°</div></div>
+      <div><div class="card bg5"><span class="card-label">⟳ 원뿔</span></div><div class="style-label">conic</div></div>
+    </div>
+  </div>
+
+  <!-- 파랑 + 하양 -->
+  <div class="section">
+    <div class="section-title">파랑 + 하양</div>
+    <div class="row">
+      <div><div class="card bw1"><span class="card-label">← 수평</span></div><div class="style-label">linear 수평</div></div>
+      <div><div class="card bw2"><span class="card-label">↘ 대각</span></div><div class="style-label">linear 135°</div></div>
+      <div><div class="card bw3"><span class="card-label">● 방사형</span></div><div class="style-label">radial</div></div>
+      <div><div class="card bw4"><span class="card-label">↕ 수직</span></div><div class="style-label">linear 수직</div></div>
+      <div><div class="card bw5"><span class="card-label">⟳ 원뿔</span></div><div class="style-label">conic</div></div>
+    </div>
+  </div>
+
+  <!-- 파랑 + 검정 -->
+  <div class="section">
+    <div class="section-title">파랑 + 검정</div>
+    <div class="row">
+      <div><div class="card bb1"><span class="card-label">← 수평</span></div><div class="style-label">linear 수평</div></div>
+      <div><div class="card bb2"><span class="card-label">↘ 대각</span></div><div class="style-label">linear 135°</div></div>
+      <div><div class="card bb3"><span class="card-label">● 방사형</span></div><div class="style-label">radial</div></div>
+      <div><div class="card bb4"><span class="card-label">↕ 수직</span></div><div class="style-label">linear 수직</div></div>
+      <div><div class="card bb5"><span class="card-label">⟳ 원뿔</span></div><div class="style-label">conic</div></div>
+    </div>
+  </div>
+
+</body>
+</html>
