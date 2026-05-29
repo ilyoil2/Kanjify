@@ -82,8 +82,9 @@ class WordButton(models.Model):
     user = models.ForeignKey(
         User, on_delete=models.SET_NULL, null=True, blank=True, related_name='buttons'
     )
+    name = models.CharField(max_length=50, default='')
     hide_days = models.IntegerField(null=True, blank=True)
-    color = models.CharField(max_length=20, default='blue')
+    color = models.CharField(max_length=20, default='#3B82F6')
 
     class Meta:
         db_table = 'tbl_word_button'
