@@ -1,8 +1,15 @@
 import { useState, useEffect } from "react"
-import { ChevronLeft, ChevronRight, Eye, EyeOff, Loader2, Volume2, Clock, CalendarClock, CheckCircle2 } from "lucide-react"
+import { ChevronLeft, ChevronRight, Eye, EyeOff, Loader2, Volume2, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "sonner"
+
+interface WordButton {
+  id: number
+  name: string
+  hide_days: number | null
+  color: string
+}
 
 interface VocabularyItem {
   id: number
@@ -18,13 +25,14 @@ interface VocabularyItem {
 const jlptLevels = ["N1", "N2", "N3", "N4", "N5"] as const
 const ITEMS_PER_PAGE = 24
 
-export function VocabularyPage() {
+export function VocabularyPage({ userEmail }: { userEmail?: string }) {
   const [activeLevel, setActiveLevel] = useState<string>("N5")
   const [vocabularyList, setVocabularyList] = useState<VocabularyItem[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [checkedItems, setCheckedItems] = useState<Set<number>>(new Set())
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [hideDetails, setHideDetails] = useState<boolean>(false)
+  const [buttons, setButtons] = useState<WordButton[]>([])
 
   // 발음 재생 함수 (Web Speech API 최적화 - Mac 고품질 음성 우선)
   const playPronunciation = (text: string) => {
@@ -63,6 +71,16 @@ export function VocabularyPage() {
     }
   }, [])
 
+  const fetchButtons = async () => {
+    try {
+      const res = await fetch("http://localhost:8002/api/buttons/")
+      if (!res.ok) return
+      setButtons(await res.json())
+    } catch (e) {
+      console.error("Failed to fetch buttons", e)
+    }
+  }
+
   const fetchVocabulary = async () => {
     setIsLoading(true)
     try {
@@ -83,6 +101,10 @@ export function VocabularyPage() {
   useEffect(() => {
     fetchVocabulary()
   }, [activeLevel])
+
+  useEffect(() => {
+    fetchButtons()
+  }, [])
 
   const totalPages = Math.max(1, Math.ceil(vocabularyList.length / ITEMS_PER_PAGE))
 
@@ -108,27 +130,25 @@ export function VocabularyPage() {
     setCurrentPage(1)
   }
 
-  const handleHideItems = async (days: number) => {
+  const handleClassify = async (buttonId: number) => {
     if (checkedItems.size === 0) return
-    
+    const button = buttons.find(b => b.id === buttonId)
+    if (!button) return
+
     try {
-      const response = await fetch("http://localhost:8002/api/vocabulary/hide/", {
+      const res = await fetch("http://localhost:8002/api/vocabulary/classify/", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ids: Array.from(checkedItems),
-          days: days
+          vocabulary_ids: Array.from(checkedItems),
+          button_id: buttonId,
         }),
       })
-
-      if (!response.ok) throw new Error("숨기기 처리 실패")
-      
-      toast.success(`${checkedItems.size}개의 단어를 ${days}일 동안 숨겼습니다.`)
+      if (!res.ok) throw new Error()
+      toast.success(`${checkedItems.size}개 단어를 "${button.name}"으로 분류했습니다.`)
       setCheckedItems(new Set())
-      fetchVocabulary() // 목록 새로고침
-    } catch (error) {
+      fetchVocabulary()
+    } catch {
       toast.error("처리 중 오류가 발생했습니다.")
     }
   }
@@ -200,24 +220,18 @@ export function VocabularyPage() {
                 <span className="text-xs font-black text-slate-700">{checkedItems.size}</span>
               </div>
               <div className="w-[1px] h-4 bg-slate-200 mx-1" />
-              <Button 
-                variant="ghost" 
-                size="sm"
-                className="bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold rounded-xl px-4 h-9 gap-2 border border-amber-100 transition-all hover:scale-[1.02] active:scale-95"
-                onClick={() => handleHideItems(5)}
-              >
-                <Clock className="size-3.5" />
-                5 Days
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="sm"
-                className="bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold rounded-xl px-4 h-9 gap-2 border border-rose-100 transition-all hover:scale-[1.02] active:scale-95"
-                onClick={() => handleHideItems(10)}
-              >
-                <CalendarClock className="size-3.5" />
-                10 Days
-              </Button>
+              {buttons.map(btn => (
+                <Button
+                  key={btn.id}
+                  variant="ghost"
+                  size="sm"
+                  className="font-bold rounded-xl px-4 h-9 gap-2 border transition-all hover:scale-[1.02] active:scale-95"
+                  style={{ backgroundColor: btn.color + '20', color: btn.color, borderColor: btn.color + '40' }}
+                  onClick={() => handleClassify(btn.id)}
+                >
+                  {btn.name}
+                </Button>
+              ))}
             </div>
           )}
           <Button
