@@ -2,7 +2,7 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Plus, Pencil, Trash2, RotateCcw, Check, X } from "lucide-react"
+import { Plus, Pencil, Trash2, RotateCcw, Check, X, Pipette } from "lucide-react"
 import { toast } from "sonner"
 
 interface WordButton {
@@ -103,7 +103,15 @@ function ButtonWordList({
   )
 }
 
-const EMPTY_FORM: ButtonFormData = { name: "", color: "#3B82F6", hide_days: "" }
+const PRESET_COLORS = [
+  "#6B9FD4", // dusty blue
+  "#6BAE8A", // sage green
+  "#C47B8A", // dusty rose
+  "#9B7BC4", // muted lavender
+  "#C49A4A", // warm amber
+]
+
+const EMPTY_FORM: ButtonFormData = { name: "", color: PRESET_COLORS[0], hide_days: "" }
 
 function InlineButtonForm({
   initial,
@@ -115,10 +123,11 @@ function InlineButtonForm({
   onCancel: () => void
 }) {
   const [form, setForm] = useState<ButtonFormData>(initial ?? EMPTY_FORM)
+  const [showCustomPicker, setShowCustomPicker] = useState(false)
 
   return (
     <div className="rounded-2xl border border-border bg-muted/30 p-5 space-y-4 animate-in slide-in-from-top-2 duration-200">
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-1.5">
           <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">이름</Label>
           <Input
@@ -140,23 +149,56 @@ function InlineButtonForm({
             min="1"
           />
         </div>
-        <div className="space-y-1.5">
-          <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">색상</Label>
-          <div className="flex items-center gap-2">
+      </div>
+
+      <div className="space-y-2">
+        <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">색상</Label>
+        <div className="flex items-center gap-2">
+          {PRESET_COLORS.map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => setForm((f) => ({ ...f, color: c }))}
+              className="size-7 rounded-full border-2 transition-all hover:scale-110"
+              style={{
+                backgroundColor: c,
+                borderColor: form.color === c ? "white" : "transparent",
+                outline: form.color === c ? `2px solid ${c}` : "none",
+                outlineOffset: "2px",
+              }}
+            />
+          ))}
+          <button
+            type="button"
+            onClick={() => setShowCustomPicker((v) => !v)}
+            className="size-7 rounded-full border-2 border-dashed border-muted-foreground/40 flex items-center justify-center text-muted-foreground hover:border-primary/60 hover:text-primary transition-all"
+            title="직접 색상 선택"
+          >
+            <Pipette className="size-3.5" />
+          </button>
+          <div
+            className="size-7 rounded-full border border-border shrink-0"
+            style={{ backgroundColor: form.color }}
+          />
+        </div>
+
+        {showCustomPicker && (
+          <div className="flex items-center gap-2 animate-in slide-in-from-top-1 duration-150">
             <input
               type="color"
               value={form.color}
               onChange={(e) => setForm((f) => ({ ...f, color: e.target.value }))}
-              className="size-10 rounded-lg cursor-pointer border border-border p-0.5 shrink-0"
+              className="size-9 rounded-lg cursor-pointer border border-border p-0.5 shrink-0"
             />
             <Input
               value={form.color}
               onChange={(e) => setForm((f) => ({ ...f, color: e.target.value }))}
-              className="font-mono"
+              className="font-mono w-36"
             />
           </div>
-        </div>
+        )}
       </div>
+
       <div className="flex justify-end gap-2">
         <Button variant="ghost" size="sm" onClick={onCancel}>
           <X className="size-4 mr-1" />
