@@ -3,22 +3,43 @@ from django.db.models import Q
 from datetime import timedelta
 from django.utils import timezone
 from django.contrib.auth.hashers import make_password, check_password
+from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, status
 from rest_framework.decorators import api_view, action
 from rest_framework.response import Response
-from .models import Vocabulary, Word, User, SearchHistory
+from .models import Vocabulary, Word, User, SearchHistory, WordButton, WordStatus
 from .serializers import VocabularySerializer
+from .serializers import WordButtonSerializer
+from .serializers import WordStatusSerializer
 from .ai_utils import analyze_kanji
+
+
+def get_current_user(email=None):
+    if email:
+        return User.objects.filter(email=email).first()
+    guest, _ = User.objects.get_or_create(
+        username='guest',
+        defaults={
+            'email': 'guest@kanjify.com',
+            'password': make_password('guest'),
+        }
+    )
+    return guest
 
 class VocabularyViewSet(viewsets.ModelViewSet):
     serializer_class = VocabularySerializer
     queryset = Vocabulary.objects.all()
 
     def get_queryset(self):
-        # 현재 시간 기준으로 hidden_until이 지났거나 없는 것만 반환
         now = timezone.now()
-        return Vocabulary.objects.filter(
-            Q(hidden_until__isnull=True) | Q(hidden_until__lte=now)
+
+        hidden_ids = WordStatus.objects.filter(
+            Q(hidden_until__isnull=True) |
+            Q(hidden_until__gt=now)
+        ).values_list('vocabulary_id', flat=True)
+
+        return Vocabulary.objects.exclude(
+            id__in=hidden_ids
         ).order_by('-created_at')
 
     @action(detail=False, methods=['post'])
@@ -33,6 +54,30 @@ class VocabularyViewSet(viewsets.ModelViewSet):
         Vocabulary.objects.filter(id__in=ids).update(hidden_until=until)
         
         return Response({"message": f"{len(ids)} items hidden until {until}"})
+
+    @action(detail=False, methods=['post'])
+    def classify(self, request):
+        vocabulary_ids = request.data.get('vocabulary_ids', [])
+        button_id = request.data.get('button_id')
+    
+        button = get_object_or_404(WordButton, id=button_id)
+
+        if button.hide_days is not None:
+            hidden_until = timezone.now() + timedelta(days=button.hide_days)
+        else:
+            hidden_until = None  # 영구 숨김
+
+        for vocab_id in vocabulary_ids:
+            vocab = get_object_or_404(Vocabulary, id=vocab_id)
+            WordStatus.objects.update_or_create(
+                vocabulary=vocab,
+                defaults={
+                    "button": button,
+                    "hidden_until": hidden_until,
+                }
+            )
+        return Response({"message": f"{len(vocabulary_ids)} items hidden until {hidden_until}"})
+
 
 @api_view(['POST'])
 def signup_view(request):
@@ -196,3 +241,27 @@ def analyze_kanji_view(request):
             "error": "서버 내부 오류가 발생했습니다.",
             "details": str(e)
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class WordButtonViewSet(viewsets.ModelViewSet):
+    serializer_class = WordButtonSerializer
+    queryset = WordButton.objects.all().order_by('hide_days')
+
+
+class WordStatusViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = WordStatusSerializer
+
+    def get_queryset(self):
+        queryset = WordStatus.objects.select_related('vocabulary', 'button').filter(
+            Q(hidden_until__isnull=True) | Q(hidden_until__gt=timezone.now())
+        )
+        button_id = self.request.query_params.get('button_id')
+        if button_id:
+            queryset = queryset.filter(button_id=button_id)
+        return queryset
+
+    @action(detail=True, methods=['post'])
+    def restore(self, request, pk=None):
+        word_status = get_object_or_404(WordStatus, pk=pk)
+        word_status.hidden_until = timezone.now() - timedelta(seconds=1)
+        word_status.save()
+        return Response({"message": "복구되었습니다."})
