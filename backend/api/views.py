@@ -14,17 +14,23 @@ from .serializers import WordStatusSerializer
 from .ai_utils import analyze_kanji
 
 
+GUEST_EMAIL = 'guest@kanjify.app'
+
 def get_current_user(email=None):
-    if email:
-        return User.objects.filter(email=email).first()
-    guest, _ = User.objects.get_or_create(
-        username='guest',
-        defaults={
-            'email': 'guest@kanjify.com',
-            'password': make_password('guest'),
-        }
-    )
-    return guest
+    target_email = email or GUEST_EMAIL
+    user = User.objects.filter(email=target_email).first()
+    if user:
+        return user
+    if target_email == GUEST_EMAIL:
+        guest, _ = User.objects.get_or_create(
+            username='guest',
+            defaults={
+                'email': GUEST_EMAIL,
+                'password': make_password('guest'),
+            }
+        )
+        return guest
+    return None
 
 class VocabularyViewSet(viewsets.ModelViewSet):
     serializer_class = VocabularySerializer
