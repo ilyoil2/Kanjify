@@ -87,6 +87,11 @@ function ButtonWordList({
             <span className="font-bold text-lg shrink-0">{ws.vocabulary.kanji}</span>
             <span className="text-sm text-muted-foreground shrink-0">{ws.vocabulary.reading}</span>
             <span className="text-sm truncate">{ws.vocabulary.meaning_ko}</span>
+            <span className="text-xs text-muted-foreground/50 shrink-0 ml-auto">
+              {ws.hidden_until
+                ? `~${new Date(ws.hidden_until).toLocaleDateString("ko-KR", { month: "numeric", day: "numeric" })}`
+                : "영구"}
+            </span>
           </div>
           <Button
             size="sm"
@@ -133,8 +138,9 @@ function InlineButtonForm({
           <Input
             autoFocus
             value={form.name}
-            onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-            placeholder="예: 5일 후 다시 학습"
+            onChange={(e) => setForm((f) => ({ ...f, name: e.target.value.slice(0, 6) }))}
+            placeholder="최대 6자"
+            maxLength={6}
           />
         </div>
         <div className="space-y-1.5">

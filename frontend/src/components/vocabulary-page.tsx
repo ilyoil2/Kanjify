@@ -225,7 +225,7 @@ export function VocabularyPage({ userEmail }: { userEmail?: string }) {
                   key={btn.id}
                   variant="ghost"
                   size="sm"
-                  className="font-bold rounded-xl px-4 h-9 gap-2 border transition-all hover:scale-[1.02] active:scale-95"
+                  className="font-bold rounded-xl w-24 h-9 gap-2 border transition-all hover:scale-[1.02] active:scale-95 justify-center"
                   style={{ backgroundColor: btn.color + '20', color: btn.color, borderColor: btn.color + '40' }}
                   onClick={() => handleClassify(btn.id)}
                 >
