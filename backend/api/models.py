@@ -96,7 +96,6 @@ class WordStatus(models.Model):
         WordButton, on_delete=models.SET_NULL, null=True, related_name='word_statuses'
     )
     hidden_until = models.DateTimeField(null=True, blank=True)  # null = 영구 숨김
-    is_active = models.BooleanField(default=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
