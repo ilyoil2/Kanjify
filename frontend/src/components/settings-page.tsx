@@ -138,14 +138,25 @@ function InlineButtonForm({
           />
         </div>
         <div className="space-y-1.5">
-          <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-            숨김 기간 (일) — 비워두면 영구
-          </Label>
+          <div className="flex items-center justify-between">
+            <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">숨김 기간</Label>
+            <button
+              type="button"
+              onClick={() => setForm((f) => ({ ...f, hide_days: "" }))}
+              className={`text-xs font-bold px-2 py-0.5 rounded-full transition-all ${
+                form.hide_days === ""
+                  ? "bg-slate-900 text-white"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+              }`}
+            >
+              영구
+            </button>
+          </div>
           <Input
             type="number"
             value={form.hide_days}
             onChange={(e) => setForm((f) => ({ ...f, hide_days: e.target.value }))}
-            placeholder="예: 5"
+            placeholder="일수 입력"
             min="1"
           />
         </div>
@@ -184,16 +195,22 @@ function InlineButtonForm({
 
         {showCustomPicker && (
           <div className="flex items-center gap-2 animate-in slide-in-from-top-1 duration-150">
-            <input
-              type="color"
-              value={form.color}
-              onChange={(e) => setForm((f) => ({ ...f, color: e.target.value }))}
-              className="size-9 rounded-lg cursor-pointer border border-border p-0.5 shrink-0"
-            />
+            <div className="relative size-7 shrink-0">
+              <input
+                type="color"
+                value={form.color}
+                onChange={(e) => setForm((f) => ({ ...f, color: e.target.value }))}
+                className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+              />
+              <div
+                className="size-7 rounded-full border-2 border-white shadow-md pointer-events-none"
+                style={{ backgroundColor: form.color }}
+              />
+            </div>
             <Input
               value={form.color}
               onChange={(e) => setForm((f) => ({ ...f, color: e.target.value }))}
-              className="font-mono w-36"
+              className="font-mono w-32 h-8 text-sm"
             />
           </div>
         )}

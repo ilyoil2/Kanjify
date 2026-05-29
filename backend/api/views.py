@@ -259,7 +259,7 @@ class WordStatusViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         queryset = WordStatus.objects.select_related('vocabulary', 'button').filter(
             Q(hidden_until__isnull=True) | Q(hidden_until__gt=timezone.now())
-        )
+        ).order_by('-updated_at')
         button_id = self.request.query_params.get('button_id')
         if button_id:
             queryset = queryset.filter(button_id=button_id)
