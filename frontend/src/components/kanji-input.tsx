@@ -26,7 +26,7 @@ export function KanjiInput({ onSubmit, isLoading = false, userEmail }: KanjiInpu
       .kanjify-btn {
         background: linear-gradient(135deg, #3B82F6, #a78bfa, #818cf8, #3B82F6);
         background-size: 300% 300%;
-        animation: kanjify-gradient 3s ease infinite;
+        animation: kanjify-gradient 6s ease infinite;
         color: white;
         cursor: pointer;
       }
