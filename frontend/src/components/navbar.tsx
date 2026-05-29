@@ -14,6 +14,8 @@ export function Navbar({ activeTab, onTabChange, user, onLogout }: NavbarProps) 
     { id: "main", label: "Main" },
     { id: "history", label: "History" },
     { id: "vocabulary", label: "Vocabulary" },
+    { id: "archive", label: "Archive" },
+    { id: "settings", label: "Settings" },
   ]
 
   const userInitial = user?.username ? user.username.charAt(0).toUpperCase() : "G"

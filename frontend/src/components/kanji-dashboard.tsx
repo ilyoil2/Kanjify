@@ -5,6 +5,8 @@ import { KanjiInput } from "@/components/kanji-input"
 import { KanjiRecursiveResult, type KanjiRecursiveData } from "@/components/kanji-recursive-result"
 import { HistoryPage } from "@/components/history-page"
 import { VocabularyPage } from "@/components/vocabulary-page"
+import { ArchivePage } from "@/components/archive-page"
+import { SettingsPage } from "@/components/settings-page"
 import { KanjiAnalyzerSidebar } from "@/components/kanji-analyzer-sidebar"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -50,6 +52,8 @@ export default function KanjiDashboard({ user, onLogout, currentPath, navigateTo
     if (currentPath === "/") setActiveTab("main")
     else if (currentPath === "/history") setActiveTab("history")
     else if (currentPath === "/vocabulary") setActiveTab("vocabulary")
+    else if (currentPath === "/archive") setActiveTab("archive")
+    else if (currentPath === "/settings") setActiveTab("settings")
   }, [currentPath])
 
   const handleTabChange = (tab: string) => {
@@ -388,7 +392,13 @@ export default function KanjiDashboard({ user, onLogout, currentPath, navigateTo
                     </DialogContent>
                   </Dialog>
                 </>
-              ) : <VocabularyPage />}
+              ) : activeTab === "vocabulary" ? (
+                <VocabularyPage />
+              ) : activeTab === "archive" ? (
+                <ArchivePage />
+              ) : activeTab === "settings" ? (
+                <SettingsPage />
+              ) : null}
             </div>
           </main>
         )}
