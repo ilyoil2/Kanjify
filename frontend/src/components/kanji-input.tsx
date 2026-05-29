@@ -59,11 +59,12 @@ export function KanjiInput({ onSubmit, isLoading = false, userEmail }: KanjiInpu
           <button
             type="submit"
             disabled={!isValidInput || isLoading}
-            className={`w-full h-11 rounded-md font-medium text-sm flex items-center justify-center gap-2 transition-all duration-200 active:scale-[0.99] ${
+            className="w-full h-11 rounded-md font-medium text-sm flex items-center justify-center gap-2 transition-opacity duration-200 active:scale-[0.99]"
+            style={
               isValidInput && !isLoading
-                ? "btn-gradient text-white hover:opacity-90 cursor-pointer"
-                : "bg-slate-100 text-slate-400 cursor-not-allowed"
-            }`}
+                ? { background: "linear-gradient(135deg, #3B82F6 0%, #a78bfa 100%)", color: "white", cursor: "pointer" }
+                : { background: "#e2e8f0", color: "#94a3b8", cursor: "not-allowed" }
+            }
           >
             <Search className="size-4" />
             {isLoading ? "Analyzing..." : "Analyze Kanji"}
