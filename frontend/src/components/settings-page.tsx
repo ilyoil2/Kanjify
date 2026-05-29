@@ -149,10 +149,10 @@ function InlineButtonForm({
             <button
               type="button"
               onClick={() => setForm((f) => ({ ...f, hide_days: "" }))}
-              className={`text-xs font-bold px-2 py-0.5 rounded-full transition-all ${
+              className={`text-xs font-bold px-3 py-1 rounded-full transition-all border ${
                 form.hide_days === ""
-                  ? "bg-slate-900 text-white"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  ? "bg-slate-900 text-white border-slate-900"
+                  : "bg-white text-slate-500 border-slate-300 hover:border-slate-400 hover:text-slate-700"
               }`}
             >
               영구
@@ -380,18 +380,23 @@ export function SettingsPage() {
         </div>
       </div>
 
-      {/* 버튼별 단어 목록 */}
-      {buttons.map((btn) => (
-        <div key={`${btn.id}-${refreshKey}`} className="space-y-3">
-          <div className="flex items-center gap-2">
-            <div className="size-3 rounded-full shrink-0" style={{ backgroundColor: btn.color }} />
-            <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">
-              {btn.name}
-            </h2>
-          </div>
-          <ButtonWordList button={btn} onRestore={() => setRefreshKey((k) => k + 1)} />
+      {/* 구분선 */}
+      <div className="border-t border-border pt-2">
+        <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground mb-6">
+          학습 단어 관리
+        </h2>
+        <div className="space-y-8">
+          {buttons.map((btn) => (
+            <div key={`${btn.id}-${refreshKey}`} className="space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="size-3 rounded-full shrink-0" style={{ backgroundColor: btn.color }} />
+                <span className="text-sm font-bold text-slate-700">{btn.name}</span>
+              </div>
+              <ButtonWordList button={btn} onRestore={() => setRefreshKey((k) => k + 1)} />
+            </div>
+          ))}
         </div>
-      ))}
+      </div>
     </div>
   )
 }

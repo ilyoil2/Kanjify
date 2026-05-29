@@ -23,7 +23,7 @@ interface VocabularyItem {
 }
 
 const jlptLevels = ["N1", "N2", "N3", "N4", "N5"] as const
-const ITEMS_PER_PAGE = 24
+const ITEMS_PER_PAGE = 20
 
 export function VocabularyPage({ userEmail }: { userEmail?: string }) {
   const [activeLevel, setActiveLevel] = useState<string>("N5")
@@ -191,7 +191,7 @@ export function VocabularyPage({ userEmail }: { userEmail?: string }) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6 pt-4">
       {/* Header Actions */}
       <div className="flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-2">
