@@ -1,5 +1,8 @@
 import os
 import json
+import requests
+import re
+import traceback
 from django.conf import settings
 from dotenv import load_dotenv
 
@@ -50,56 +53,116 @@ PROMPT_TEMPLATE = """너는 일본어 학습 전문가이다. 사용자가 입�
 입력: "{word}"
 """
 
-def analyze_kanji(word):
+def call_openrouter(prompt):
+    api_key = os.getenv("OPEN_ROUTER_KEY")
+    if not api_key:
+        return None, "OPEN_ROUTER_KEY가 설정되지 않았습니다."
+    
     try:
-        # 임포트 에러가 서버 전체를 죽이지 않도록 함수 내부에서 임포트
-        try:
-            import google.generativeai as genai
-        except ImportError:
-            return {"error": "google-generativeai 패키지가 설치되어 있지 않습니다. pip install google-generativeai 를 실행하세요."}
+        response = requests.post(
+            url="https://openrouter.ai/api/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
+            data=json.dumps({
+                "model": "google/gemini-2.0-flash-001", 
+                "messages": [
+                    {"role": "user", "content": prompt}
+                ],
+            }),
+            timeout=15
+        )
+        if response.status_code == 200:
+            result = response.json()
+            return result['choices'][0]['message']['content'], None
+        else:
+            return None, f"OpenRouter 오류: {response.status_code} - {response.text}"
+    except Exception as e:
+        return None, f"OpenRouter 요청 실패: {str(e)}"
 
-        api_key = os.getenv("GOOGLE_API_KEY")
-        if not api_key:
-            return {"error": "GOOGLE_API_KEY가 설정되지 않았습니다. .env 파일을 확인하세요."}
-            
+def call_gemini(prompt):
+    try:
+        import google.generativeai as genai
+    except ImportError:
+        return None, "google-generativeai 패키지가 설치되어 있지 않습니다."
+
+    api_key = os.getenv("GOOGLE_API_KEY")
+    if not api_key:
+        return None, "GOOGLE_API_KEY가 설정되지 않았습니다."
+        
+    try:
         genai.configure(api_key=api_key)
-        
-        # 가장 범용적인 최신 Flash 모델로 변경 (1.5가 목록에 없으므로 대체)
-        model = genai.GenerativeModel('models/gemini-flash-latest')
-        prompt = PROMPT_TEMPLATE.format(word=word)
-
-        
+        model = genai.GenerativeModel('gemini-2.0-flash')
         response = model.generate_content(prompt)
         
         if not response.candidates:
-            return {"error": "AI가 응답을 생성하지 못했습니다. (Safety Filter 등에 의해 차단되었을 수 있습니다.)"}
+            return None, "Gemini 응답 생성 실패 (Safety Filter 등)"
             
         try:
-            text = response.text.strip()
+            return response.text.strip(), None
         except ValueError as e:
-            return {
-                "error": "안전 정책에 의해 응답이 차단되었습니다.",
-                "details": str(e),
-                "feedback": getattr(response, 'prompt_feedback', 'No feedback available')
-            }
-
-        if "```" in text:
-            import re
-            json_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', text, re.DOTALL)
-            if json_match:
-                text = json_match.group(1)
-            else:
-                code_match = re.search(r'```\s*(\{.*?\})\s*```', text, re.DOTALL)
-                if code_match:
-                    text = code_match.group(1)
-        
-        result = json.loads(text)
-        return result
+            return None, f"Gemini 안전 정책 차단: {str(e)}"
     except Exception as e:
-        import traceback
-        print(f"Error in analyze_kanji: {e}")
-        print(traceback.format_exc())
-        return {
-            "error": "분석 중 오류가 발생했습니다.",
-            "details": str(e)
-        }
+        return None, f"Gemini 요청 실패: {str(e)}"
+
+def parse_json_from_response(text):
+    if not text:
+        return None
+        
+    text = text.strip()
+    if "```" in text:
+        json_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', text, re.DOTALL)
+        if json_match:
+            text = json_match.group(1)
+        else:
+            code_match = re.search(r'```\s*(\{.*?\})\s*```', text, re.DOTALL)
+            if code_match:
+                text = code_match.group(1)
+    
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        # JSON 블록을 찾지 못한 경우 텍스트 전체에서 JSON 형태를 찾아봄
+        json_match = re.search(r'\{.*\}', text, re.DOTALL)
+        if json_match:
+            try:
+                return json.loads(json_match.group(0))
+            except:
+                pass
+        return None
+
+def analyze_kanji(word):
+    prompt = PROMPT_TEMPLATE.format(word=word)
+    
+    # 1. OpenRouter 시도
+    print(f"--- Attempting analysis via OpenRouter for: {word} ---")
+    text, or_error = call_openrouter(prompt)
+    
+    if text:
+        result = parse_json_from_response(text)
+        if result:
+            print("OpenRouter analysis successful.")
+            return result
+        print(f"OpenRouter returned invalid JSON: {text[:200]}...")
+    else:
+        print(f"OpenRouter failed: {or_error}")
+
+    # 2. OpenRouter 실패 시 Gemini 시도
+    print(f"--- Attempting fallback to direct Gemini for: {word} ---")
+    text, gem_error = call_gemini(prompt)
+    
+    if text:
+        result = parse_json_from_response(text)
+        if result:
+            print("Gemini analysis successful.")
+            return result
+        print(f"Gemini returned invalid JSON: {text[:200]}...")
+    else:
+        print(f"Gemini failed: {gem_error}")
+
+    # 3. 둘 다 실패
+    return {
+        "error": "모든 AI 서비스 호출에 실패했습니다.",
+        "details": f"OpenRouter: {or_error} | Gemini: {gem_error}"
+    }

@@ -241,6 +241,7 @@ export function SettingsPage() {
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
+  const [activeSubTab, setActiveSubTab] = useState<"buttons" | "vocabulary">("buttons")
 
   const fetchButtons = async () => {
     const res = await fetch("http://localhost:8002/api/buttons/")
@@ -305,98 +306,145 @@ export function SettingsPage() {
   }
 
   return (
-    <div className="space-y-10">
-      <div>
-        <h1 className="text-2xl font-black text-slate-900">Settings</h1>
-      </div>
-
-      {/* 버튼 관리 */}
-      <div className="space-y-3">
-        <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">
-          버튼 관리
-        </h2>
-
-        <div className="space-y-2">
-          {buttons.map((btn) =>
-            editingId === btn.id ? (
-              <InlineButtonForm
-                key={btn.id}
-                initial={{
-                  name: btn.name,
-                  color: btn.color,
-                  hide_days: btn.hide_days !== null ? String(btn.hide_days) : "",
-                }}
-                onSave={(data) => handleEdit(btn.id, data)}
-                onCancel={() => setEditingId(null)}
-              />
-            ) : (
-              <div
-                key={btn.id}
-                className="flex items-center justify-between px-4 py-3 bg-card border border-border rounded-xl"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="size-4 rounded-full shrink-0" style={{ backgroundColor: btn.color }} />
-                  <span className="font-bold">{btn.name}</span>
-                  <span className="text-sm text-muted-foreground">
-                    {btn.hide_days !== null ? `${btn.hide_days}일` : "영구"}
-                  </span>
-                </div>
-                <div className="flex gap-1">
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="size-8"
-                    onClick={() => { setShowCreateForm(false); setEditingId(btn.id) }}
-                  >
-                    <Pencil className="size-4" />
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="size-8 text-red-500 hover:text-red-600 hover:bg-red-50"
-                    onClick={() => handleDelete(btn.id)}
-                  >
-                    <Trash2 className="size-4" />
-                  </Button>
-                </div>
-              </div>
-            )
-          )}
-
-          {showCreateForm ? (
-            <InlineButtonForm
-              onSave={handleCreate}
-              onCancel={() => setShowCreateForm(false)}
-            />
-          ) : (
-            <button
-              onClick={() => { setEditingId(null); setShowCreateForm(true) }}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-border text-muted-foreground hover:border-primary/40 hover:text-primary hover:bg-primary/5 transition-all duration-200 text-sm font-semibold"
-            >
-              <Plus className="size-4" />
-              버튼 추가
-            </button>
-          )}
+    <div className="flex flex-col md:flex-row gap-8 items-start min-h-[600px]">
+      {/* Sidebar Navigation */}
+      <aside className="w-full md:w-64 shrink-0 bg-card border border-border rounded-2xl p-2 sticky top-24">
+        <div className="p-3 mb-2">
+          <h1 className="text-xl font-black text-slate-900 tracking-tight italic">Settings</h1>
+          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">Management</p>
         </div>
-      </div>
+        
+        <nav className="space-y-1">
+          <button
+            onClick={() => setActiveSubTab("buttons")}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all duration-200 ${
+              activeSubTab === "buttons"
+                ? "bg-slate-900 text-white shadow-lg shadow-slate-200"
+                : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+            }`}
+          >
+            <div className={`size-1.5 rounded-full ${activeSubTab === "buttons" ? "bg-blue-400" : "bg-slate-300"}`} />
+            버튼 설정
+          </button>
+          <button
+            onClick={() => setActiveSubTab("vocabulary")}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all duration-200 ${
+              activeSubTab === "vocabulary"
+                ? "bg-slate-900 text-white shadow-lg shadow-slate-200"
+                : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+            }`}
+          >
+            <div className={`size-1.5 rounded-full ${activeSubTab === "vocabulary" ? "bg-purple-400" : "bg-slate-300"}`} />
+            학습 단어 관리
+          </button>
+        </nav>
+      </aside>
 
-      {/* 구분선 */}
-      <div className="border-t border-border pt-2">
-        <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground mb-6">
-          학습 단어 관리
-        </h2>
-        <div className="space-y-8">
-          {buttons.map((btn) => (
-            <div key={`${btn.id}-${refreshKey}`} className="space-y-3">
-              <div className="flex items-center gap-2">
-                <div className="size-3 rounded-full shrink-0" style={{ backgroundColor: btn.color }} />
-                <span className="text-sm font-bold text-slate-700">{btn.name}</span>
-              </div>
-              <ButtonWordList button={btn} onRestore={() => setRefreshKey((k) => k + 1)} />
+      {/* Main Content Area */}
+      <main className="flex-1 min-w-0 bg-white/50 backdrop-blur-sm rounded-3xl p-2 md:p-1 border border-transparent">
+        {activeSubTab === "buttons" ? (
+          <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+            <div className="px-2 pt-2">
+              <h2 className="text-lg font-black text-slate-900">버튼 설정</h2>
+              <p className="text-sm text-slate-500 mt-1">단어를 분류할 버튼의 이름, 색상, 숨김 기간을 설정합니다.</p>
             </div>
-          ))}
-        </div>
-      </div>
+
+            <div className="space-y-3">
+              {buttons.map((btn) =>
+                editingId === btn.id ? (
+                  <InlineButtonForm
+                    key={btn.id}
+                    initial={{
+                      name: btn.name,
+                      color: btn.color,
+                      hide_days: btn.hide_days !== null ? String(btn.hide_days) : "",
+                    }}
+                    onSave={(data) => handleEdit(btn.id, data)}
+                    onCancel={() => setEditingId(null)}
+                  />
+                ) : (
+                  <div
+                    key={btn.id}
+                    className="flex items-center justify-between px-5 py-4 bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-200"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div 
+                        className="size-10 rounded-xl flex items-center justify-center shadow-inner" 
+                        style={{ backgroundColor: btn.color + '20' }}
+                      >
+                        <div className="size-4 rounded-full shadow-sm" style={{ backgroundColor: btn.color }} />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-extrabold text-slate-900 tracking-tight">{btn.name}</span>
+                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                          {btn.hide_days !== null ? `${btn.hide_days}일 후 복구` : "영구 숨김"}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex gap-1.5">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="size-9 rounded-xl hover:bg-slate-50 transition-colors"
+                        onClick={() => { setShowCreateForm(false); setEditingId(btn.id) }}
+                      >
+                        <Pencil className="size-4.5 text-slate-400" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="size-9 rounded-xl text-red-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                        onClick={() => handleDelete(btn.id)}
+                      >
+                        <Trash2 className="size-4.5" />
+                      </Button>
+                    </div>
+                  </div>
+                )
+              )}
+
+              {showCreateForm ? (
+                <InlineButtonForm
+                  onSave={handleCreate}
+                  onCancel={() => setShowCreateForm(false)}
+                />
+              ) : (
+                <button
+                  onClick={() => { setEditingId(null); setShowCreateForm(true) }}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-5 rounded-2xl border-2 border-dashed border-slate-200 text-slate-400 hover:border-blue-400/50 hover:text-blue-600 hover:bg-blue-50/30 transition-all duration-300 text-sm font-bold group"
+                >
+                  <Plus className="size-5 transition-transform group-hover:rotate-90 duration-300" />
+                  새로운 버튼 추가
+                </button>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
+            <div className="px-2 pt-2">
+              <h2 className="text-lg font-black text-slate-900">학습 단어 관리</h2>
+              <p className="text-sm text-slate-500 mt-1">각 버튼 그룹별로 숨겨진 단어들을 확인하고 복구할 수 있습니다.</p>
+            </div>
+
+            <div className="space-y-10">
+              {buttons.map((btn) => (
+                <div key={`${btn.id}-${refreshKey}`} className="space-y-4">
+                  <div className="flex items-center justify-between px-2">
+                    <div className="flex items-center gap-3">
+                      <div className="size-2 rounded-full" style={{ backgroundColor: btn.color }} />
+                      <span className="text-sm font-black text-slate-900 tracking-tight italic">{btn.name}</span>
+                      <span className="text-[10px] font-bold text-slate-400 px-2 py-0.5 rounded-full bg-slate-100 uppercase tracking-widest">Group</span>
+                    </div>
+                  </div>
+                  <div className="bg-white/30 rounded-2xl p-1">
+                    <ButtonWordList button={btn} onRestore={() => setRefreshKey((k) => k + 1)} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </main>
     </div>
   )
 }

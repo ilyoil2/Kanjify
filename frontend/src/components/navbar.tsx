@@ -62,46 +62,71 @@ export function Navbar({ activeTab, onTabChange, user, onLogout, onSettingsClick
           {/* User Profile with Logout */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <div className="flex items-center gap-2.5 rounded-full px-3 py-1.5 cursor-pointer transition-colors duration-200 hover:bg-muted">
-                <Avatar className="size-8 border border-border shadow-sm shrink-0">
+              <div className="flex items-center gap-3 rounded-xl pl-1 pr-4 py-1 cursor-pointer transition-all duration-300 hover:bg-slate-50 group border border-transparent hover:border-slate-200 relative bg-white/40 backdrop-blur-md">
+                <Avatar className="size-10 border-2 border-white shadow-md shrink-0 z-10 transition-all duration-300 group-hover:shadow-blue-200/50">
                   <AvatarImage src="" alt="User" />
-                  <AvatarFallback className="bg-primary text-primary-foreground text-sm font-bold">
+                  <AvatarFallback 
+                    className="text-white text-xs font-black"
+                    style={{ background: "linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)" }}
+                  >
                     {userInitial}
                   </AvatarFallback>
                 </Avatar>
-                <span className="text-sm font-medium text-foreground hidden sm:block">
-                  {user?.username || "Guest User"}
-                </span>
-                <ChevronDown className="size-4 text-muted-foreground hidden sm:block" />
+
+                <div className="flex flex-col z-10 py-1">
+                  <span className="text-[13.5px] font-extrabold text-slate-900 tracking-tight leading-none mb-1 group-hover:text-blue-700 transition-colors">
+                    {user?.username || "Guest User"}
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <div className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                      {user?.email ? 'Member' : 'Visitor'}
+                    </span>
+                  </div>
+                </div>
+
+                <ChevronDown className="size-3.5 text-slate-300 group-hover:text-slate-600 group-hover:translate-y-0.5 transition-all duration-300 ml-2" />
               </div>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 rounded-xl shadow-xl border-border">
-              <DropdownMenuLabel className="font-black text-xs uppercase tracking-widest text-muted-foreground">My Account</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <div className="px-2 py-1.5">
-                <p className="text-sm font-bold text-foreground">{user?.username}</p>
-                <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+            
+            <DropdownMenuContent align="end" className="w-60 rounded-2xl shadow-2xl border-slate-100 p-1.5 bg-white/98 backdrop-blur-xl">
+              <div 
+                className="mx-1 mt-1 mb-2 p-4 rounded-xl relative overflow-hidden shadow-inner"
+                style={{ background: "linear-gradient(135deg, #1e40af 0%, #6d28d9 100%)" }}
+              >
+                <div className="absolute -right-4 -bottom-4 size-24 bg-white/5 rounded-full blur-2xl" />
+                <div className="absolute -left-4 -top-4 size-24 bg-blue-400/10 rounded-full blur-2xl" />
+                
+                <p className="text-[9px] font-black uppercase tracking-[0.25em] text-blue-200/70 mb-1.5">Account Member</p>
+                <p className="text-base font-black text-white truncate tracking-tight">{user?.username}</p>
+                <p className="text-[11px] text-indigo-100/70 truncate font-semibold tracking-tight">{user?.email || "guest@kanjify.app"}</p>
               </div>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="focus:bg-muted cursor-pointer font-medium py-2 rounded-lg">
-                <User className="mr-2 size-4" />
-                <span>Profile</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={onSettingsClick}
-                className="focus:bg-muted cursor-pointer font-medium py-2 rounded-lg"
-              >
-                <Settings className="mr-2 size-4" />
-                <span>Settings</span>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem 
-                onClick={onLogout}
-                className="focus:bg-red-50 focus:text-red-600 text-red-500 cursor-pointer font-bold py-2 rounded-lg transition-colors"
-              >
-                <LogOut className="mr-2 size-4" />
-                <span>Log out</span>
-              </DropdownMenuItem>
+
+              <div className="px-1 py-1">
+                <DropdownMenuItem className="focus:bg-slate-50 focus:text-blue-700 cursor-pointer font-bold py-2.5 rounded-xl transition-all group">
+                  <User className="mr-2.5 size-4 text-slate-400 group-hover:text-blue-500 transition-colors" />
+                  <span className="text-[13px]">View Profile</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={onSettingsClick}
+                  className="focus:bg-slate-50 focus:text-blue-700 cursor-pointer font-bold py-2.5 rounded-xl transition-all group"
+                >
+                  <Settings className="mr-2.5 size-4 text-slate-400 group-hover:text-blue-500 transition-colors" />
+                  <span className="text-[13px]">Account Settings</span>
+                </DropdownMenuItem>
+              </div>
+
+              <DropdownMenuSeparator className="my-1.5 bg-slate-100/80" />
+              
+              <div className="px-1">
+                <DropdownMenuItem 
+                  onClick={onLogout}
+                  className="focus:bg-red-50 focus:text-red-600 text-red-500 cursor-pointer font-extrabold py-2.5 rounded-xl transition-all group"
+                >
+                  <LogOut className="mr-2.5 size-4 opacity-70 group-hover:opacity-100 transition-opacity" />
+                  <span className="text-[13px]">Sign Out</span>
+                </DropdownMenuItem>
+              </div>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
