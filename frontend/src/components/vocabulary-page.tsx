@@ -318,16 +318,16 @@ export function VocabularyPage({ userEmail }: { userEmail?: string }) {
                   {item.kanji}
                 </span>
                 
-                {!hideDetails && (
-                  <div className="space-y-2.5 w-full">
-                    <p className="text-[13px] font-black text-blue-600 uppercase tracking-widest bg-blue-50/80 px-3 py-1 rounded-full inline-block">
-                      {item.reading}
-                    </p>
+                <div className="space-y-2.5 w-full">
+                  <p className="text-[13px] font-black text-blue-600 uppercase tracking-widest bg-blue-50/80 px-3 py-1 rounded-full inline-block">
+                    {item.reading}
+                  </p>
+                  {!hideDetails && (
                     <p className="text-lg font-black text-slate-700 tracking-tight leading-tight px-1 line-clamp-2 min-h-[3rem] flex items-center justify-center">
                       {item.meaning_ko || item.meaning_en}
                     </p>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
           ))}
