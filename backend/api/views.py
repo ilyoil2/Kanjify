@@ -1,5 +1,6 @@
 import threading
 import traceback
+import logging
 from django.db import models
 from django.db.models import Q
 from datetime import timedelta
@@ -15,6 +16,7 @@ from .serializers import WordButtonSerializer
 from .serializers import WordStatusSerializer
 from .ai_utils import analyze_kanji
 
+logger = logging.getLogger(__name__)
 
 GUEST_EMAIL = 'guest@kanjify.app'
 
@@ -59,7 +61,12 @@ class VocabularyViewSet(viewsets.ModelViewSet):
             return Response({"error": "No IDs provided"}, status=status.HTTP_400_BAD_REQUEST)
         
         until = timezone.now() + timedelta(days=days)
-        Vocabulary.objects.filter(id__in=ids).update(hidden_until=until)
+        for vocab_id in ids:
+            vocab = get_object_or_404(Vocabulary, id=vocab_id)
+            WordStatus.objects.update_or_create(
+                vocabulary=vocab,
+                defaults={"hidden_until": until}
+            )
         
         return Response({"message": f"{len(ids)} items hidden until {until}"})
 
@@ -208,7 +215,7 @@ def save_analysis_to_db(word_text, result, user_email=None):
             meaning_ko=info.get("meaning_ko")
         )
     except Exception as e:
-        print(f"Error saving to DB: {e}")
+        logger.error(f"Error saving to DB: {e}")
 
 @api_view(['POST'])
 def analyze_kanji_view(request):
@@ -243,8 +250,8 @@ def analyze_kanji_view(request):
             
         return Response(result)
     except Exception as e:
-        print(f"Unexpected error in analyze_kanji_view: {e}")
-        print(traceback.format_exc())
+        logger.error(f"Unexpected error in analyze_kanji_view: {e}")
+        logger.error(traceback.format_exc())
         return Response({
             "error": "서버 내부 오류가 발생했습니다.",
             "details": str(e)

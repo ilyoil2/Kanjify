@@ -3,8 +3,11 @@ import json
 import requests
 import re
 import traceback
+import logging
 from django.conf import settings
 from dotenv import load_dotenv
+
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -144,30 +147,30 @@ def analyze_kanji(word):
     prompt = PROMPT_TEMPLATE.format(word=word)
     
     # 1. OpenRouter 시도
-    print(f"--- Attempting analysis via OpenRouter for: {word} ---")
+    logger.info(f"--- Attempting analysis via OpenRouter for: {word} ---")
     text, or_error = call_openrouter(prompt)
     
     if text:
         result = parse_json_from_response(text)
         if result:
-            print("OpenRouter analysis successful.")
+            logger.info("OpenRouter analysis successful.")
             return result
-        print(f"OpenRouter returned invalid JSON: {text[:200]}...")
+        logger.warning(f"OpenRouter returned invalid JSON: {text[:200]}...")
     else:
-        print(f"OpenRouter failed: {or_error}")
+        logger.error(f"OpenRouter failed: {or_error}")
 
     # 2. OpenRouter 실패 시 Gemini 시도
-    print(f"--- Attempting fallback to direct Gemini for: {word} ---")
+    logger.info(f"--- Attempting fallback to direct Gemini for: {word} ---")
     text, gem_error = call_gemini(prompt)
     
     if text:
         result = parse_json_from_response(text)
         if result:
-            print("Gemini analysis successful.")
+            logger.info("Gemini analysis successful.")
             return result
-        print(f"Gemini returned invalid JSON: {text[:200]}...")
+        logger.warning(f"Gemini returned invalid JSON: {text[:200]}...")
     else:
-        print(f"Gemini failed: {gem_error}")
+        logger.error(f"Gemini failed: {gem_error}")
 
     # 3. 둘 다 실패
     return {

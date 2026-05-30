@@ -275,29 +275,29 @@ export function VocabularyPage({ userEmail }: { userEmail?: string }) {
         <div className="h-[1px] flex-1 bg-slate-100/50" />
       </div>
 
-      {/* 5. Vocabulary Grid (더욱 컴팩트하게) */}
+      {/* 5. Vocabulary Grid (한 줄에 4개로 고정 및 글자 크기 확대) */}
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-32 space-y-4">
           <Loader2 className="size-10 animate-spin text-blue-600/30" />
           <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Loading Masterlist...</p>
         </div>
       ) : vocabularyList.length > 0 ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2.5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {currentItems.map((item) => (
             <div
               key={item.id}
-              className={`group relative flex flex-col p-3 rounded-[20px] border-2 transition-all duration-300 cursor-pointer overflow-hidden ${
+              className={`group relative flex flex-col p-6 rounded-[28px] border-2 transition-all duration-300 cursor-pointer overflow-hidden ${
                 checkedItems.has(item.id) 
                   ? "bg-blue-50/50 border-blue-600/20 shadow-xl shadow-blue-100/50 scale-[1.02]" 
                   : "bg-white border-slate-50 hover:border-blue-100 hover:shadow-lg"
               }`}
               onClick={() => handleCheckChange(item.id, !checkedItems.has(item.id))}
             >
-              <div className="flex items-start justify-between mb-2 relative z-10">
-                <div className={`size-4.5 rounded-md border-2 flex items-center justify-center transition-all ${
+              <div className="flex items-start justify-between mb-4 relative z-10">
+                <div className={`size-6 rounded-lg border-2 flex items-center justify-center transition-all ${
                   checkedItems.has(item.id) ? "bg-blue-600 border-blue-600" : "border-slate-200 bg-white"
                 }`}>
-                  {checkedItems.has(item.id) && <CheckCircle2 className="size-3 text-white" />}
+                  {checkedItems.has(item.id) && <CheckCircle2 className="size-3.5 text-white" />}
                 </div>
                 
                 <button
@@ -305,25 +305,25 @@ export function VocabularyPage({ userEmail }: { userEmail?: string }) {
                     e.stopPropagation()
                     playPronunciation(item.kanji)
                   }}
-                  className="size-7 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-blue-600 hover:text-white transition-all active:scale-90"
+                  className="size-9 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-blue-600 hover:text-white transition-all active:scale-90"
                 >
-                  <Volume2 className="size-4" />
+                  <Volume2 className="size-5" />
                 </button>
               </div>
 
-              <div className="flex flex-col items-center text-center space-y-2 relative z-10">
-                <span className={`text-3xl font-black tracking-tighter transition-colors leading-none ${
+              <div className="flex flex-col items-center text-center space-y-4 relative z-10">
+                <span className={`text-5xl font-black tracking-tighter transition-colors leading-none ${
                   checkedItems.has(item.id) ? "text-blue-700" : "text-slate-800"
                 }`}>
                   {item.kanji}
                 </span>
                 
                 {!hideDetails && (
-                  <div className="space-y-1.5 w-full">
-                    <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest bg-blue-50 px-2 py-0.5 rounded-full inline-block">
+                  <div className="space-y-2.5 w-full">
+                    <p className="text-[13px] font-black text-blue-600 uppercase tracking-widest bg-blue-50/80 px-3 py-1 rounded-full inline-block">
                       {item.reading}
                     </p>
-                    <p className="text-[13px] font-black text-slate-700 tracking-tight leading-tight px-1 line-clamp-1">
+                    <p className="text-lg font-black text-slate-700 tracking-tight leading-tight px-1 line-clamp-2 min-h-[3rem] flex items-center justify-center">
                       {item.meaning_ko || item.meaning_en}
                     </p>
                   </div>
