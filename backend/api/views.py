@@ -254,6 +254,15 @@ class WordButtonViewSet(viewsets.ModelViewSet):
     serializer_class = WordButtonSerializer
     queryset = WordButton.objects.all().order_by('hide_days')
 
+    def create(self, request, *args, **kwargs):
+        # 한 사람당 최대 4개까지만 생성 가능하도록 제한 (현재는 전체 개수로 제한)
+        if WordButton.objects.count() >= 4:
+            return Response(
+                {"error": "버튼은 최대 4개까지만 생성할 수 있습니다."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        return super().create(request, *args, **kwargs)
+
 
 class WordStatusViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = WordStatusSerializer

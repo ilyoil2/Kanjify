@@ -253,6 +253,10 @@ export function SettingsPage() {
   }, [])
 
   const handleCreate = async (data: ButtonFormData) => {
+    if (buttons.length >= 4) {
+      toast.error("버튼은 최대 4개까지만 생성할 수 있습니다.")
+      return
+    }
     if (!data.name.trim()) { toast.error("이름을 입력해주세요."); return }
     try {
       const res = await fetch("http://localhost:8002/api/buttons/", {

@@ -191,53 +191,20 @@ export function VocabularyPage({ userEmail }: { userEmail?: string }) {
   }
 
   return (
-    <div className="space-y-6 pt-4">
-      {/* Header Actions */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
-          <div className="inline-flex items-center gap-1 rounded-md bg-muted p-1">
-            {jlptLevels.map((level) => (
-              <button
-                key={level}
-                onClick={() => handleLevelChange(level)}
-                className={`rounded px-4 py-2 text-sm font-medium transition-all duration-200 ${
-                  activeLevel === level
-                    ? "bg-card text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {level}
-              </button>
-            ))}
-          </div>
+    <div className="space-y-8 pt-4 pb-20 relative animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {/* 1. Header (History 페이지와 통일) */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-3xl font-black tracking-tighter text-slate-900">Vocabulary</h2>
+          <p className="text-sm text-slate-500 font-medium">JLPT 등급별 단어들을 효율적으로 학습하고 분류하세요.</p>
         </div>
-
-        <div className="flex items-center gap-2">
-          {checkedItems.size > 0 && (
-            <div className="flex items-center gap-1.5 p-1 bg-white border border-slate-200 rounded-2xl shadow-xl shadow-slate-200/50 animate-in zoom-in-95 duration-300">
-              <div className="px-3 py-1 bg-slate-50 rounded-xl flex items-center gap-2 border border-slate-100">
-                <CheckCircle2 className="size-3.5 text-blue-600" />
-                <span className="text-xs font-black text-slate-700">{checkedItems.size}</span>
-              </div>
-              <div className="w-[1px] h-4 bg-slate-200 mx-1" />
-              {buttons.map(btn => (
-                <Button
-                  key={btn.id}
-                  variant="ghost"
-                  size="sm"
-                  className="font-bold rounded-xl w-24 h-9 gap-2 border transition-all hover:scale-[1.02] active:scale-95 justify-center"
-                  style={{ backgroundColor: btn.color + '20', color: btn.color, borderColor: btn.color + '40' }}
-                  onClick={() => handleClassify(btn.id)}
-                >
-                  {btn.name}
-                </Button>
-              ))}
-            </div>
-          )}
+        <div className="flex items-center gap-3">
           <Button
             variant={hideDetails ? "default" : "outline"}
             size="icon"
-            className="size-10 rounded-2xl border-slate-200 shadow-sm transition-all hover:border-blue-400"
+            className={`size-10 rounded-2xl border-slate-200 transition-all duration-300 shadow-sm ${
+              hideDetails ? "bg-slate-900 text-white" : "hover:border-blue-400 hover:bg-blue-50"
+            }`}
             onClick={() => setHideDetails(!hideDetails)}
             title={hideDetails ? "Show all details" : "Hide details (Kanji only)"}
           >
@@ -246,124 +213,180 @@ export function VocabularyPage({ userEmail }: { userEmail?: string }) {
         </div>
       </div>
 
-      {/* Item Count */}
-      <div className="text-center text-sm text-muted-foreground min-h-[20px]">
-        {!isLoading && (
-          checkedCount > 0 ? (
-            <span>
-              <span className="font-medium text-primary">{checkedCount}</span> of{" "}
-              {vocabularyList.length} items selected for {activeLevel}
-            </span>
-          ) : (
-            <span>
-              Showing {vocabularyList.length} vocabulary items for {activeLevel}
-            </span>
-          )
-        )}
+      {/* 2. Level Tabs (중앙 정렬) */}
+      <div className="flex justify-center">
+        <div className="bg-slate-100/50 p-1 rounded-2xl flex items-center gap-1 border border-slate-200 shadow-inner">
+          {jlptLevels.map((level) => (
+            <button
+              key={level}
+              onClick={() => handleLevelChange(level)}
+              className={`px-6 py-2 rounded-xl text-xs font-black transition-all duration-300 tracking-widest ${
+                activeLevel === level
+                  ? "bg-slate-900 text-white shadow-lg shadow-slate-300 scale-105"
+                  : "text-slate-400 hover:text-slate-600 hover:bg-white"
+              }`}
+            >
+              {level}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Vocabulary Grid */}
+      {/* 3. Floating Action Toolbar (When selected) */}
+      {checkedItems.size > 0 && (
+        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-10 duration-500 w-auto max-w-[95%]">
+          <div className="flex items-center gap-3 p-2 bg-white/95 backdrop-blur-2xl border border-blue-100 rounded-[28px] shadow-[0_20px_50px_rgba(59,130,246,0.3)] ring-4 ring-blue-50/50">
+            <div className="px-5 py-2.5 bg-blue-600 rounded-2xl flex items-center gap-2.5 shadow-lg shadow-blue-200 shrink-0">
+              <CheckCircle2 className="size-4 text-white" />
+              <span className="text-sm font-black text-white whitespace-nowrap">{checkedItems.size} Selected</span>
+            </div>
+            
+            <div className="flex items-center gap-2 px-1">
+              {buttons.map(btn => (
+                <button
+                  key={btn.id}
+                  className="px-4 py-2.5 rounded-2xl text-[13px] font-black transition-all hover:scale-105 active:scale-95 shadow-sm border border-transparent whitespace-nowrap min-w-fit shrink-0"
+                  style={{ backgroundColor: btn.color, color: 'white' }}
+                  onClick={() => handleClassify(btn.id)}
+                >
+                  {btn.name}
+                </button>
+              ))}
+            </div>
+
+            <div className="w-[1px] h-8 bg-slate-100 shrink-0 mx-1" />
+            
+            <button 
+              onClick={() => setCheckedItems(new Set())}
+              className="size-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors shrink-0 mr-1"
+            >
+              <ChevronLeft className="size-5 rotate-45" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 4. Item Count */}
+      <div className="flex items-center justify-center gap-4">
+        <div className="h-[1px] flex-1 bg-slate-100/50" />
+        <div className="text-[9px] font-black uppercase tracking-[0.4em] text-slate-300">
+          {vocabularyList.length} Japanese Words
+        </div>
+        <div className="h-[1px] flex-1 bg-slate-100/50" />
+      </div>
+
+      {/* 5. Vocabulary Grid (더욱 컴팩트하게) */}
       {isLoading ? (
-        <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-          <Loader2 className="size-8 animate-spin mb-2" />
-          <p>Loading vocabulary...</p>
+        <div className="flex flex-col items-center justify-center py-32 space-y-4">
+          <Loader2 className="size-10 animate-spin text-blue-600/30" />
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Loading Masterlist...</p>
         </div>
       ) : vocabularyList.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2.5">
           {currentItems.map((item) => (
             <div
               key={item.id}
-              className={`flex items-center gap-3 px-4 py-3 bg-card border border-border rounded-md hover:bg-muted/50 transition-colors cursor-pointer ${
-                checkedItems.has(item.id) ? "bg-muted/30 border-primary/30" : ""
+              className={`group relative flex flex-col p-3 rounded-[20px] border-2 transition-all duration-300 cursor-pointer overflow-hidden ${
+                checkedItems.has(item.id) 
+                  ? "bg-blue-50/50 border-blue-600/20 shadow-xl shadow-blue-100/50 scale-[1.02]" 
+                  : "bg-white border-slate-50 hover:border-blue-100 hover:shadow-lg"
               }`}
               onClick={() => handleCheckChange(item.id, !checkedItems.has(item.id))}
             >
-              <Checkbox
-                checked={checkedItems.has(item.id)}
-                onCheckedChange={(checked) =>
-                  handleCheckChange(item.id, checked as boolean)
-                }
-                onClick={(e) => e.stopPropagation()}
-                className="rounded-sm"
-              />
-              <div className="flex items-center gap-4 flex-1 min-w-0">
-                <span className="font-bold text-lg text-foreground shrink-0">
+              <div className="flex items-start justify-between mb-2 relative z-10">
+                <div className={`size-4.5 rounded-md border-2 flex items-center justify-center transition-all ${
+                  checkedItems.has(item.id) ? "bg-blue-600 border-blue-600" : "border-slate-200 bg-white"
+                }`}>
+                  {checkedItems.has(item.id) && <CheckCircle2 className="size-3 text-white" />}
+                </div>
+                
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    playPronunciation(item.kanji)
+                  }}
+                  className="size-7 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-blue-600 hover:text-white transition-all active:scale-90"
+                >
+                  <Volume2 className="size-4" />
+                </button>
+              </div>
+
+              <div className="flex flex-col items-center text-center space-y-2 relative z-10">
+                <span className={`text-3xl font-black tracking-tighter transition-colors leading-none ${
+                  checkedItems.has(item.id) ? "text-blue-700" : "text-slate-800"
+                }`}>
                   {item.kanji}
                 </span>
+                
                 {!hideDetails && (
-                  <>
-                    <span className="text-sm text-muted-foreground shrink-0">
+                  <div className="space-y-1.5 w-full">
+                    <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest bg-blue-50 px-2 py-0.5 rounded-full inline-block">
                       {item.reading}
-                    </span>
-                    <span className="text-sm text-foreground truncate ml-auto">
+                    </p>
+                    <p className="text-[13px] font-black text-slate-700 tracking-tight leading-tight px-1 line-clamp-1">
                       {item.meaning_ko || item.meaning_en}
-                    </span>
-                  </>
+                    </p>
+                  </div>
                 )}
               </div>
-              
-              {/* 발음 듣기 버튼 */}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-8 rounded-full hover:bg-blue-50 hover:text-blue-600 shrink-0"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  playPronunciation(item.kanji)
-                }}
-                title="발음 듣기"
-              >
-                <Volume2 className="size-4" />
-              </Button>
             </div>
           ))}
         </div>
       ) : (
-        <div className="text-center py-20 bg-muted/20 rounded-lg border border-dashed">
-          <p className="text-muted-foreground">No vocabulary found for {activeLevel}</p>
-          <p className="text-sm text-muted-foreground mt-1">Try another JLPT level or add some data.</p>
+        <div className="text-center py-32 bg-slate-50/50 rounded-[40px] border-2 border-dashed border-slate-200 space-y-6">
+          <div className="size-20 bg-white rounded-3xl flex items-center justify-center mx-auto shadow-xl">
+             <EyeOff className="size-10 text-slate-200" />
+          </div>
+          <div className="space-y-2">
+            <p className="text-lg font-black text-slate-900">No vocabulary found</p>
+            <p className="text-sm text-slate-400 font-medium">Try another JLPT level or add some data.</p>
+          </div>
         </div>
       )}
 
-      {/* Pagination */}
+      {/* 5. Pagination */}
       {!isLoading && totalPages > 1 && (
-        <div className="flex items-center justify-center gap-1 pt-4">
+        <div className="flex items-center justify-center gap-2 pt-10">
           <Button
-            variant="outline"
+            variant="ghost"
             size="icon"
-            className="size-9 rounded-md"
+            className="size-11 rounded-2xl hover:bg-white hover:shadow-md transition-all"
             onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
             disabled={currentPage === 1}
           >
-            <ChevronLeft className="size-4" />
+            <ChevronLeft className="size-5" />
           </Button>
 
-          {getPageNumbers().map((page, index) => (
-            typeof page === "number" ? (
-              <Button
-                key={index}
-                variant={currentPage === page ? "default" : "outline"}
-                size="icon"
-                className="size-9 rounded-md"
-                onClick={() => setCurrentPage(page)}
-              >
-                {page}
-              </Button>
-            ) : (
-              <span key={index} className="px-2 text-muted-foreground">
-                {page}
-              </span>
-            )
-          ))}
+          <div className="flex items-center gap-1 bg-white/50 p-1.5 rounded-2xl border border-slate-100 shadow-sm">
+            {getPageNumbers().map((page, index) => (
+              typeof page === "number" ? (
+                <button
+                  key={index}
+                  onClick={() => setCurrentPage(page)}
+                  className={`size-9 rounded-xl text-xs font-black transition-all ${
+                    currentPage === page 
+                      ? "bg-slate-900 text-white shadow-lg" 
+                      : "text-slate-400 hover:bg-white hover:text-slate-900"
+                  }`}
+                >
+                  {page}
+                </button>
+              ) : (
+                <span key={index} className="px-2 text-slate-300 font-black">
+                  {page}
+                </span>
+              )
+            ))}
+          </div>
 
           <Button
-            variant="outline"
+            variant="ghost"
             size="icon"
-            className="size-9 rounded-md"
+            className="size-11 rounded-2xl hover:bg-white hover:shadow-md transition-all"
             onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
             disabled={currentPage === totalPages}
           >
-            <ChevronRight className="size-4" />
+            <ChevronRight className="size-5" />
           </Button>
         </div>
       )}
