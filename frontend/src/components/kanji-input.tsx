@@ -55,9 +55,9 @@ export function KanjiInput({ onSubmit, isLoading = false, userEmail }: KanjiInpu
           <div className="space-y-2">
             <label
               htmlFor="kanji-input"
-              className="text-sm font-medium text-foreground"
+              className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-1"
             >
-              한자 또는 히라가나/가타카나 입력 (1-6자)
+              Enter Kanji or Hiragana
             </label>
             <Input
               id="kanji-input"
@@ -65,8 +65,8 @@ export function KanjiInput({ onSubmit, isLoading = false, userEmail }: KanjiInpu
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               placeholder="漢字を入力してください"
-              className={`h-12 text-lg text-center font-medium placeholder:text-muted-foreground/50 transition-all duration-200 focus:ring-2 focus:ring-primary/20 ${
-                isInvalid ? "border-red-500 focus:border-red-500" : "focus:border-primary"
+              className={`h-14 text-2xl text-center font-bold tracking-tight placeholder:text-slate-200 border-2 rounded-2xl transition-all duration-300 focus:ring-4 focus:ring-blue-100 shadow-inner ${
+                isInvalid ? "border-red-200 bg-red-50" : "border-slate-100 bg-slate-50/20 focus:border-blue-500/50 focus:bg-white"
               }`}
               maxLength={6}
               autoComplete="off"

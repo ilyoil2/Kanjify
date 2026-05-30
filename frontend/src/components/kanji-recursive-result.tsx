@@ -189,7 +189,7 @@ export function KanjiRecursiveResult({ data, word, variant = "default" }: KanjiR
               data.examples.map((ex, idx) => (
                 <div key={idx} className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-emerald-200 transition-all group relative overflow-hidden">
                   <div className="absolute top-0 left-0 w-1.5 h-full bg-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pr-2">
                     <div className="space-y-1.5 flex-1">
                       <p className="text-xl font-bold text-slate-800 tracking-tight group-hover:text-emerald-700 transition-colors">
                         {ex.sentence}
@@ -208,8 +208,25 @@ export function KanjiRecursiveResult({ data, word, variant = "default" }: KanjiR
                     {/* 음성 재생 버튼 */}
                     <button
                       onClick={() => {
+                        if (!window.speechSynthesis) return;
+                        window.speechSynthesis.cancel();
+                        
                         const utterance = new SpeechSynthesisUtterance(ex.sentence);
-                        utterance.lang = 'ja-JP';
+                        const voices = window.speechSynthesis.getVoices();
+                        
+                        // Voca 페이지와 동일한 보이스 선택 로직 (Mac 고품질 우선)
+                        const preferredVoice = 
+                          voices.find(v => v.name.includes("Kyoko")) || 
+                          voices.find(v => v.name.includes("Otoya")) || 
+                          voices.find(v => v.lang === "ja-JP" || v.lang === "ja_JP");
+
+                        if (preferredVoice) {
+                          utterance.voice = preferredVoice;
+                        }
+
+                        utterance.lang = "ja-JP";
+                        utterance.rate = 0.9;
+                        utterance.pitch = 1.0;
                         window.speechSynthesis.speak(utterance);
                       }}
                       className="shrink-0 size-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 hover:shadow-inner transition-all duration-300 group/btn active:scale-95"

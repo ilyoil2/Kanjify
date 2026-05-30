@@ -216,9 +216,12 @@ export default function KanjiDashboard({ user, onLogout, currentPath, navigateTo
         {activeTab === "main" ? (
           <>
             <aside className="w-72 border-r border-slate-200 bg-white hidden md:flex flex-col shadow-sm">
-              <div className="p-6 border-b border-slate-50 flex items-center justify-between">
-                <div className="flex items-center gap-2 font-black text-xs uppercase tracking-widest text-blue-600">
-                  <History className="w-4 h-4" /> Recent Analysis
+              <div className="p-6 border-b border-slate-50 flex items-center justify-between bg-white">
+                <div 
+                  className="flex items-center gap-2 font-black text-[11px] uppercase tracking-[0.2em] bg-clip-text text-transparent"
+                  style={{ backgroundImage: "linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)" }}
+                >
+                  <History className="w-3.5 h-3.5 text-blue-600" /> Recent Analysis
                 </div>
               </div>
               <ScrollArea className="flex-1">
@@ -227,18 +230,26 @@ export default function KanjiDashboard({ user, onLogout, currentPath, navigateTo
                     <div key={item.id} className="group relative"> 
                       <button
                         onClick={() => handleKanjiSubmit(item.word, true)}
-                        className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all duration-300 ${
+                        className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all duration-500 relative overflow-hidden ${
                           currentResult?.word === item.word 
-                            ? "bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-200 scale-[1.02]" 
+                            ? "border-transparent text-white shadow-lg shadow-blue-200 scale-[1.02]" 
                             : "bg-white hover:bg-slate-50 border-slate-100 hover:border-blue-200"
                         }`}
+                        style={currentResult?.word === item.word ? {
+                          background: "linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)"
+                        } : {}}
                       >
-                        <div className="flex flex-col items-start pr-6 overflow-hidden">
-                          <span className={`text-xl font-black tracking-tight truncate w-full text-left ${currentResult?.word === item.word ? "text-white" : "text-slate-800"}`}>
+                        {/* 활성화 시 배경 효과 */}
+                        {currentResult?.word === item.word && (
+                          <div className="absolute inset-0 bg-white/10 opacity-50 animate-pulse" />
+                        )}
+
+                        <div className="flex flex-col items-start pr-6 overflow-hidden z-10">
+                          <span className={`text-xl font-black tracking-tighter truncate w-full text-left ${currentResult?.word === item.word ? "text-white" : "text-slate-700"}`}>
                             {item.word}
                           </span>
-                          <span className={`text-[10px] font-bold uppercase tracking-wider ${currentResult?.word === item.word ? "text-blue-100" : "text-slate-400"}`}>
-                            {item.data?.nodes ? Object.keys(item.data.nodes).length : 0} Nodes
+                          <span className={`text-[10px] font-black uppercase tracking-[0.15em] ${currentResult?.word === item.word ? "text-blue-100/80" : "text-slate-300"}`}>
+                            {item.data?.nodes ? Object.keys(item.data.nodes).length : 0} Components
                           </span>
                         </div>
                       </button>
