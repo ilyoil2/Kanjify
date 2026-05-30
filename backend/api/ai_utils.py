@@ -8,16 +8,20 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-PROMPT_TEMPLATE = """너는 일본어 학습 전문가이다. 사용자가 입력한 단어에 대해 한자 구조 분석과 실용 예문 3개를 JSON으로 응답하라.
+PROMPT_TEMPLATE = """너는 세계 최고의 한자 어원 및 계통학 전문가이다. 사용자가 입력한 단어에 대해 자원(字源)에 근거한 한자 구조 분석과 실용 예문 3개를 JSON으로 응답하라.
 
 [분석 지침]
-1. 한자 분석: 각 한자의 구성요소를 계통학적으로 분석하여 'nodes'에 담으라.
-2. 예문: 해당 단어의 실용 예문 딱 3개를 작성하라 (sentence, reading, meaning).
+1. 한자 어원 분석: 각 한자를 단순한 모양(획)이 아니라, **역사적 유래와 자원(字源)에 근거하여 회의(會意) 또는 형성(形聲) 원리로 분석**하라.
+   - 예: '年'은 '禾(벼)'와 '人(사람)'의 결합으로 분석 (방패 '干' 등으로 분석하지 말 것).
+   - 예: '休'는 '人(사람)'과 '木(나무)'의 결합으로 분석.
+2. 계층적 분해: 각 한자의 구성요소를 'nodes'에 담으라. 더 이상 의미 있는 단위로 나뉘지 않을 때까지 재귀적으로 분석하되, 의미 없는 획 단위 분해는 지양하라.
+3. 예문: 해당 단어의 실용 예문 딱 3개를 작성하라 (sentence, reading, meaning).
 
 [절대 규칙]
 1. 반드시 JSON으로만 응답하라.
-2. 'nodes'의 모든 구성요소는 반드시 키(key)로 존재해야 한다.
-3. 토큰 절약을 위해 모든 설명은 생략하고 결과 데이터만 아주 짧게 작성하라.
+2. 'nodes'의 모든 구성요소는 반드시 키(key)로 존재해야 하며, 뜻(meaning)과 음(reading)을 분리하라.
+3. 현대적인 글자 모양에 속지 말고, 설문해자(說文解字) 등 정통 자원학적 관점을 우선하라.
+4. 토큰 절약을 위해 모든 설명은 생략하고 결과 데이터만 아주 짧게 작성하라.
 
 ---
 
@@ -66,12 +70,16 @@ def call_openrouter(prompt):
                 "Content-Type": "application/json",
             },
             data=json.dumps({
-                "model": "google/gemini-2.0-flash-001", 
+                "model": "openrouter/free", # 가용한 무료 모델 중 가장 적합한 것을 자동으로 선택
                 "messages": [
+                    {
+                        "role": "system", 
+                        "content": "너는 공신력 있는 한자 자원(字源) 정보를 검색하여 분석하는 전문가이다. 반드시 위키낱말사전(Wiktionary)이나 설문해자 등의 근거를 확인하여 답변하라."
+                    },
                     {"role": "user", "content": prompt}
                 ],
             }),
-            timeout=15
+            timeout=25
         )
         if response.status_code == 200:
             result = response.json()
