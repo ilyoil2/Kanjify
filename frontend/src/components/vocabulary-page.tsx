@@ -73,7 +73,7 @@ export function VocabularyPage({ userEmail }: { userEmail?: string }) {
 
   const fetchButtons = async () => {
     try {
-      const res = await fetch("http://localhost:8002/api/buttons/")
+      const res = await fetch("http://localhost:8000/api/buttons/")
       if (!res.ok) return
       setButtons(await res.json())
     } catch (e) {
@@ -85,7 +85,7 @@ export function VocabularyPage({ userEmail }: { userEmail?: string }) {
     setIsLoading(true)
     try {
       // Fetch from our new Django API
-      const response = await fetch("http://localhost:8002/api/vocabulary/")
+      const response = await fetch("http://localhost:8000/api/vocabulary/")
       if (!response.ok) throw new Error("Failed to fetch vocabulary")
       const data = await response.json()
       
@@ -136,7 +136,7 @@ export function VocabularyPage({ userEmail }: { userEmail?: string }) {
     if (!button) return
 
     try {
-      const res = await fetch("http://localhost:8002/api/vocabulary/classify/", {
+      const res = await fetch("http://localhost:8000/api/vocabulary/classify/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

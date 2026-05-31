@@ -63,6 +63,18 @@ if [[ ! -d "$FRONTEND_DIR/node_modules" ]]; then
   exit 1
 fi
 
+if command -v lsof >/dev/null 2>&1; then
+  if lsof -iTCP:"$BACKEND_PORT" -sTCP:LISTEN >/dev/null 2>&1; then
+    echo "Port $BACKEND_PORT is already in use. Stop the existing backend server or set BACKEND_PORT."
+    exit 1
+  fi
+
+  if lsof -iTCP:3002 -sTCP:LISTEN >/dev/null 2>&1; then
+    echo "Port 3002 is already in use. Stop the existing frontend server first."
+    exit 1
+  fi
+fi
+
 echo "Starting Django API: http://localhost:$BACKEND_PORT"
 (
   cd "$BACKEND_DIR"

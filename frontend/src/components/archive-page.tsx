@@ -78,7 +78,7 @@ export function ArchivePage() {
   const [activeButtonId, setActiveButtonId] = useState<string>("")
 
   const fetchButtons = async () => {
-    const res = await fetch("http://localhost:8002/api/buttons/")
+    const res = await fetch("http://localhost:8000/api/buttons/")
     const data: WordButton[] = await res.json()
     setButtons(data)
     if (data.length > 0) setActiveButtonId(String(data[0].id))
@@ -86,7 +86,7 @@ export function ArchivePage() {
   }
 
   const fetchWordStatuses = async (buttonId: number) => {
-    const res = await fetch(`http://localhost:8002/api/word-status/?button_id=${buttonId}`)
+    const res = await fetch(`http://localhost:8000/api/word-status/?button_id=${buttonId}`)
     const data: WordStatus[] = await res.json()
     setWordStatuses((prev) => ({ ...prev, [buttonId]: data }))
   }
@@ -108,7 +108,7 @@ export function ArchivePage() {
 
   const handleRestore = async (statusId: number, buttonId: number) => {
     try {
-      const res = await fetch(`http://localhost:8002/api/word-status/${statusId}/restore/`, {
+      const res = await fetch(`http://localhost:8000/api/word-status/${statusId}/restore/`, {
         method: "POST",
       })
       if (!res.ok) throw new Error()

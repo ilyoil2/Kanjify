@@ -43,7 +43,7 @@ function ButtonWordList({
 
   const fetchStatuses = async () => {
     setIsLoading(true)
-    const res = await fetch(`http://localhost:8002/api/word-status/?button_id=${button.id}`)
+    const res = await fetch(`http://localhost:8000/api/word-status/?button_id=${button.id}`)
     setStatuses(await res.json())
     setIsLoading(false)
   }
@@ -54,7 +54,7 @@ function ButtonWordList({
 
   const handleRestore = async (statusId: number) => {
     try {
-      const res = await fetch(`http://localhost:8002/api/word-status/${statusId}/restore/`, {
+      const res = await fetch(`http://localhost:8000/api/word-status/${statusId}/restore/`, {
         method: "POST",
       })
       if (!res.ok) throw new Error()
@@ -244,7 +244,7 @@ export function SettingsPage() {
   const [activeSubTab, setActiveSubTab] = useState<"buttons" | "vocabulary">("buttons")
 
   const fetchButtons = async () => {
-    const res = await fetch("http://localhost:8002/api/buttons/")
+    const res = await fetch("http://localhost:8000/api/buttons/")
     setButtons(await res.json())
   }
 
@@ -259,7 +259,7 @@ export function SettingsPage() {
     }
     if (!data.name.trim()) { toast.error("이름을 입력해주세요."); return }
     try {
-      const res = await fetch("http://localhost:8002/api/buttons/", {
+      const res = await fetch("http://localhost:8000/api/buttons/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -280,7 +280,7 @@ export function SettingsPage() {
   const handleEdit = async (id: number, data: ButtonFormData) => {
     if (!data.name.trim()) { toast.error("이름을 입력해주세요."); return }
     try {
-      const res = await fetch(`http://localhost:8002/api/buttons/${id}/`, {
+      const res = await fetch(`http://localhost:8000/api/buttons/${id}/`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -300,7 +300,7 @@ export function SettingsPage() {
 
   const handleDelete = async (id: number) => {
     try {
-      const res = await fetch(`http://localhost:8002/api/buttons/${id}/`, { method: "DELETE" })
+      const res = await fetch(`http://localhost:8000/api/buttons/${id}/`, { method: "DELETE" })
       if (!res.ok) throw new Error()
       toast.success("삭제되었습니다.")
       fetchButtons()
