@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { Search, Sparkles, Trash2, History, AlertCircle, Loader2, ChevronLeft } from "lucide-react"
+import { Search, Sparkles, Trash2, History, AlertCircle, Loader2, Clock, MoreHorizontal, LayoutDashboard, Command } from "lucide-react"
 import { Navbar } from "@/components/navbar"
 import { KanjiInput } from "@/components/kanji-input"
 import { KanjiRecursiveResult, type KanjiRecursiveData } from "@/components/kanji-recursive-result"
@@ -17,16 +17,20 @@ import {
   DialogTitle,
   DialogDescription
 } from "@/components/ui/dialog"
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { toast } from "sonner"
 
 interface HistoryItem {
-  id: number // This will now be the backend ID for tab history, or a temp ID for sidebar
+  id: number
   word: string
-  // For sidebar, we need the full data for display; for tab, we might only need meaning.
-  // Adapting to display meaning, but structure could be refined.
-  meaning?: string | null // Meaning for display in history list
-  data?: KanjiRecursiveData // Full data for result display
-  timestamp: number // For sidebar ordering/display
+  meaning?: string | null
+  data?: KanjiRecursiveData
+  timestamp: number
 }
 
 interface KanjiDashboardProps {
@@ -39,14 +43,44 @@ interface KanjiDashboardProps {
 export default function KanjiDashboard({ user, onLogout, currentPath, navigateTo }: KanjiDashboardProps) {
   const [activeTab, setActiveTab] = useState("main")
   const [currentResult, setCurrentResult] = useState<{word: string, data: KanjiRecursiveData} | null>(null)
-  const [sidebarHistory, setSidebarHistory] = useState<HistoryItem[]>([]) // Local storage history for sidebar
-  const [tabHistory, setTabHistory] = useState<HistoryItem[]>([]) // Backend history for the History tab
-  const [historyAnalysisResult, setHistoryAnalysisResult] = useState<{word: string, data: KanjiRecursiveData} | null>(null) // Inline history result
+  const [sidebarHistory, setSidebarHistory] = useState<HistoryItem[]>([])
+  const [tabHistory, setTabHistory] = useState<HistoryItem[]>([])
+  const [historyAnalysisResult, setHistoryAnalysisResult] = useState<{word: string, data: KanjiRecursiveData} | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  
+  // Sidebar Resizing Logic
+  const [sidebarWidth, setSidebarWidth] = useState(260)
+  const [isResizing, setIsResizing] = useState(false)
 
-  // URL 경로와 탭 상태 동기화
+  const startResizing = (e: React.MouseEvent) => {
+    setIsResizing(true)
+    e.preventDefault()
+  }
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing) return
+      const newWidth = e.clientX
+      if (newWidth > 180 && newWidth < 450) {
+        setSidebarWidth(newWidth)
+      }
+    }
+    const handleMouseUp = () => setIsResizing(false)
+    
+    if (isResizing) {
+      window.addEventListener("mousemove", handleMouseMove)
+      window.addEventListener("mouseup", handleMouseUp)
+      document.body.style.cursor = "col-resize"
+    }
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove)
+      window.removeEventListener("mouseup", handleMouseUp)
+      document.body.style.cursor = "default"
+    }
+  }, [isResizing])
+
   useEffect(() => {
     if (currentPath === "/") setActiveTab("main")
     else if (currentPath === "/history") setActiveTab("history")
@@ -59,7 +93,6 @@ export default function KanjiDashboard({ user, onLogout, currentPath, navigateTo
     navigateTo(path)
   }
 
-  // 로컬 스토리지에서 사이드바 히스토리 불러오기
   useEffect(() => {
     const saved = localStorage.getItem("kanji_history")
     if (saved) {
@@ -71,18 +104,15 @@ export default function KanjiDashboard({ user, onLogout, currentPath, navigateTo
     }
   }, [])
 
-  // 히스토리 로컬 스토리지에 저장 (사이드바용)
   useEffect(() => {
     localStorage.setItem("kanji_history", JSON.stringify(sidebarHistory))
   }, [sidebarHistory])
 
-  // 백엔드에서 히스토리 불러오기 (History 탭용)
   const fetchBackendHistory = async () => {
     setIsLoading(true)
     setError(null)
     try {
       const userEmail = user?.email
-      // Ensure email is available before constructing URL. If not logged in (guest), fetch general history or none.
       const url = userEmail ? `http://localhost:8002/api/history/?email=${userEmail}` : "http://localhost:8002/api/history/"
       
       const response = await fetch(url)
@@ -100,12 +130,11 @@ export default function KanjiDashboard({ user, onLogout, currentPath, navigateTo
     }
   }
 
-  // History 탭 활성화 시 백엔드 히스토리 로드
   useEffect(() => {
     if (activeTab === "history") {
       fetchBackendHistory()
     }
-  }, [activeTab, user]) // Fetch history when tab changes to 'history' or user changes
+  }, [activeTab, user])
 
   const handleKanjiSubmit = async (word: string, skipHistory: boolean = false) => {
     setIsLoading(true)
@@ -114,9 +143,7 @@ export default function KanjiDashboard({ user, onLogout, currentPath, navigateTo
     try {
       const response = await fetch("http://localhost:8002/api/analyze-kanji/", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           word,
           email: user?.email,
@@ -130,11 +157,8 @@ export default function KanjiDashboard({ user, onLogout, currentPath, navigateTo
       }
 
       const data: KanjiRecursiveData = await response.json()
-      
-      const newResult = { word, data }
-      setCurrentResult(newResult)
+      setCurrentResult({ word, data })
 
-      // Update sidebar history locally immediately
       if (!skipHistory) {
         setSidebarHistory(prev => {
           const newEntry = {
@@ -148,204 +172,193 @@ export default function KanjiDashboard({ user, onLogout, currentPath, navigateTo
         })
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "알 수 오류가 발생했습니다.")
+      setError(err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다.")
     } finally {
       setIsLoading(false)
     }
   }
 
-  // Sidebar delete operations (local)
   const deleteSidebarHistoryEntry = (e: React.MouseEvent, word: string) => {
     e.stopPropagation()
     setSidebarHistory(prev => prev.filter(h => h.word !== word))
-    if (currentResult?.word === word) {
-      setCurrentResult(null)
-    }
+    if (currentResult?.word === word) setCurrentResult(null)
   }
 
-  // 백엔드 히스토리 삭제 구현
   const deleteBackendHistoryEntry = async (id: number) => {
     try {
       const response = await fetch(`http://localhost:8002/api/history/?id=${id}&email=${user?.email || ""}`, {
         method: 'DELETE'
       })
       if (!response.ok) throw new Error("삭제 실패")
-      fetchBackendHistory() // 목록 새로고침
+      fetchBackendHistory()
     } catch (err) {
       toast.error("삭제 중 오류가 발생했습니다.")
     }
   }
 
   const handleReAnalyze = async (word: string) => {
-    setIsLoading(true)
-    setError(null)
-    try {
-      const response = await fetch("http://localhost:8002/api/analyze-kanji/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ 
-          word,
-          email: user?.email,
-          skip_history: true 
-        }),
-      })
-
-      if (!response.ok) throw new Error("분석 결과를 가져오는데 실패했습니다.")
-      const data: KanjiRecursiveData = await response.json()
-      setHistoryAnalysisResult({ word, data })
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "오류가 발생했습니다.")
-    } finally {
-      setIsLoading(false)
-    }
+    setActiveTab("main")
+    navigateTo("/")
+    setTimeout(() => handleKanjiSubmit(word, true), 100)
   }
 
-  // 탭 전환 시 히스토리 분석 결과 초기화
   useEffect(() => {
     setHistoryAnalysisResult(null)
   }, [activeTab])
 
+  const formatDate = (ts: number) => {
+    return new Intl.DateTimeFormat('ko-KR', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    }).format(new Date(ts))
+  }
 
   return (
-    <div className="min-h-screen bg-slate-50 relative flex flex-col font-sans antialiased text-gray-900">
+    <div className="min-h-screen bg-[#fafafa] relative flex flex-col font-sans antialiased text-slate-900 selection:bg-blue-100 selection:text-blue-900">
       <Navbar activeTab={activeTab} onTabChange={handleTabChange} user={user} onLogout={onLogout} onSettingsClick={() => handleTabChange("settings")} />
 
-      <div className="flex-1 flex pt-16 h-[calc(100vh-64px)] overflow-hidden">
+      <div className="flex-1 flex pt-14 h-[calc(100vh-56px)] overflow-hidden">
         {activeTab === "main" ? (
           <>
-            <aside className="w-72 border-r border-slate-200 bg-white hidden md:flex flex-col shadow-sm">
-              <div className="p-6 border-b border-slate-50 flex items-center justify-between bg-white">
-                <div 
-                  className="flex items-center gap-2 font-black text-[11px] uppercase tracking-[0.2em] bg-clip-text text-transparent"
-                  style={{ backgroundImage: "linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)" }}
-                >
-                  <History className="w-3.5 h-3.5 text-blue-600" /> Recent Analysis
+            <aside 
+              className="border-r border-slate-200 bg-white hidden md:flex flex-col relative group/sidebar"
+              style={{ width: sidebarWidth }}
+            >
+              <div className="p-5 flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="size-5 rounded-md bg-blue-600/10 flex items-center justify-center">
+                    <Clock className="size-3 text-blue-600" />
+                  </div>
+                  <span className="text-[11px] font-black uppercase tracking-[0.1em] text-slate-400">Recent</span>
                 </div>
               </div>
-              <ScrollArea className="flex-1">
-                <div className="p-4 space-y-3">
+
+              <ScrollArea className="flex-1 px-3">
+                <div className="space-y-1 pb-6">
                   {sidebarHistory.map((item) => (
-                    <div key={item.id} className="group relative"> 
+                    <div 
+                      key={item.id} 
+                      className={`group relative flex items-center rounded-xl transition-all duration-300 ${
+                        currentResult?.word === item.word 
+                          ? "bg-blue-50 text-blue-700 shadow-sm shadow-blue-100/50" 
+                          : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                      }`}
+                    >
                       <button
                         onClick={() => handleKanjiSubmit(item.word, true)}
-                        className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all duration-500 relative overflow-hidden ${
-                          currentResult?.word === item.word 
-                            ? "border-transparent text-white shadow-lg shadow-blue-200 scale-[1.02]" 
-                            : "bg-white hover:bg-slate-50 border-slate-100 hover:border-blue-200"
-                        }`}
-                        style={currentResult?.word === item.word ? {
-                          background: "linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)"
-                        } : {}}
+                        className="flex-1 flex flex-col items-start px-3 py-2.5 overflow-hidden"
                       >
-                        {/* 활성화 시 배경 효과 */}
-                        {currentResult?.word === item.word && (
-                          <div className="absolute inset-0 bg-white/10 opacity-50 animate-pulse" />
-                        )}
-
-                        <div className="flex flex-col items-start pr-6 overflow-hidden z-10">
-                          <span className={`text-xl font-black tracking-tighter truncate w-full text-left ${currentResult?.word === item.word ? "text-white" : "text-slate-700"}`}>
-                            {item.word}
-                          </span>
-                          <span className={`text-[10px] font-black uppercase tracking-[0.15em] ${currentResult?.word === item.word ? "text-blue-100/80" : "text-slate-300"}`}>
-                            {item.data?.nodes ? Object.keys(item.data.nodes).length : 0} Components
-                          </span>
-                        </div>
+                        <span className="text-sm font-bold tracking-tight truncate w-full text-left">{item.word}</span>
+                        <span className="text-[10px] font-medium opacity-60">
+                          {formatDate(item.timestamp)}
+                        </span>
                       </button>
                       <button 
-                        onClick={(e) => deleteSidebarHistoryEntry(e, item.word)}
-                        className={`absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full transition-all ${
-                          currentResult?.word === item.word ? "text-blue-200 hover:text-white hover:bg-blue-500" : "opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-500 hover:bg-red-50"
-                        }`}
+                        onClick={(e) => deleteSidebarHistoryEntry(e as any, item.word)}
+                        className="mr-2 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-white hover:text-red-500 hover:shadow-sm transition-all"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="size-3.5" />
                       </button>
                     </div>
                   ))}
                   {sidebarHistory.length === 0 && (
-                    <div className="flex flex-col items-center justify-center py-20 px-6 text-center space-y-4">
-                      <div className="size-12 rounded-2xl bg-slate-50 flex items-center justify-center border border-slate-100">
-                        <History className="w-6 h-6 text-slate-300" />
-                      </div>
-                      <p className="text-xs text-slate-400 font-medium leading-relaxed">
-                        최근 분석한 단어가 없습니다.<br/>새로운 단어를 입력해보세요.
-                      </p>
+                    <div className="py-12 px-4 text-center border-2 border-dashed border-slate-100 rounded-2xl">
+                      <p className="text-[11px] text-slate-300 font-bold uppercase tracking-widest">History Empty</p>
                     </div>
                   )}
                 </div>
               </ScrollArea>
+
+              {/* Resize Handle */}
+              <div 
+                onMouseDown={startResizing}
+                className={`absolute right-0 top-0 w-1 h-full cursor-col-resize hover:bg-blue-400/30 transition-colors z-20 ${isResizing ? "bg-blue-500/50" : ""}`}
+              />
             </aside>
 
-            <main className="flex-1 overflow-y-auto bg-slate-50/50">
-              <div className="max-w-5xl mx-auto p-6 lg:p-12 space-y-12">
-                <div className="space-y-8">
-                  <div className="text-center space-y-3">
-                    <h1 className="text-5xl font-black tracking-tighter text-slate-900">
-                      Kanjify{" "}
-                      <span
-                        className="bg-clip-text text-transparent"
-                        style={{ backgroundImage: "linear-gradient(135deg, #3B82F6 0%, #a78bfa 100%)" }}
-                      >
-                        Deep
-                      </span>{" "}
-                      Analysis
-                    </h1>
-                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.5em]">
-                      AI-Powered Recursive Kanji Breakdown
-                    </p>
+            <main className="flex-1 overflow-y-auto bg-[#fafafa]">
+              <div className="max-w-[1000px] mx-auto p-8 lg:p-16 space-y-16">
+                <div className="flex flex-col items-center gap-10">
+                  <div className="relative">
+                    <div className="absolute -inset-4 bg-blue-500/5 blur-3xl rounded-full" />
+                    <div className="relative flex flex-col items-center gap-4">
+                      <div className="size-12 rounded-2xl bg-slate-900 flex items-center justify-center shadow-2xl shadow-slate-200 rotate-3 hover:rotate-0 transition-transform duration-500">
+                        <LayoutDashboard className="size-6 text-white" />
+                      </div>
+                      <div className="text-center space-y-1">
+                        <h1 className="text-3xl font-black tracking-tighter text-slate-900 sm:text-4xl">
+                          Kanjify <span className="text-blue-600">Deep</span>
+                        </h1>
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-[0.3em]">
+                          Recursive Etymology Engine
+                        </p>
+                      </div>
+                    </div>
                   </div>
                   
-                  <div className="max-w-2xl mx-auto">
-                    <KanjiInput onSubmit={(word) => handleKanjiSubmit(word)} isLoading={isLoading} />
+                  <div className="w-full max-w-xl relative group">
+                    <div className="absolute -inset-1 bg-gradient-to-r from-blue-600/20 to-indigo-600/20 rounded-2xl blur opacity-0 group-focus-within:opacity-100 transition duration-1000" />
+                    <div className="relative">
+                      <KanjiInput onSubmit={(word) => handleKanjiSubmit(word)} isLoading={isLoading} />
+                    </div>
                   </div>
                 </div>
 
                 <div className="min-h-[400px]">
                   {isLoading ? (
-                    <div className="flex flex-col items-center justify-center py-32 space-y-6">
-                      <div className="relative">
-                        <div className="size-20 rounded-3xl bg-blue-600/10 animate-pulse" />
-                        <Loader2 className="size-10 text-blue-600 animate-spin absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                    <div className="flex flex-col items-center justify-center py-32 space-y-8">
+                      <div className="relative size-16">
+                        <div className="absolute inset-0 rounded-2xl border-2 border-slate-100" />
+                        <div className="absolute inset-0 rounded-2xl border-2 border-t-blue-600 animate-spin" />
                       </div>
                       <div className="text-center space-y-2">
-                        <p className="text-sm font-black text-slate-900">한자 구조를 분석 중입니다...</p>
-                        <p className="text-xs text-slate-400">Gemini AI가 재귀적으로 구성요소를 파악하고 있습니다.</p>
+                        <p className="text-xs font-black text-slate-900 uppercase tracking-widest">Processing Data</p>
+                        <p className="text-[11px] text-slate-400 font-medium">Deconstructing kanji components via Gemini AI</p>
                       </div>
                     </div>
                   ) : error ? (
-                    <Alert variant="destructive" className="max-w-2xl mx-auto rounded-3xl border-2">
-                      <AlertCircle className="h-5 w-5" />
-                      <AlertTitle className="font-black">분석 오류</AlertTitle>
-                      <AlertDescription className="text-xs font-medium">
-                        {error} - 서버가 실행 중인지, 혹은 API 키가 유효한지 확인해주세요.
-                      </AlertDescription>
-                    </Alert>
+                    <div className="max-w-xl mx-auto p-6 rounded-3xl bg-white border-2 border-red-50 shadow-xl shadow-red-100/20 flex items-start gap-4">
+                      <div className="size-10 rounded-2xl bg-red-50 flex items-center justify-center shrink-0">
+                        <AlertCircle className="size-5 text-red-600" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm font-black text-red-900">Analysis encountered an issue</p>
+                        <p className="text-xs text-red-600/80 font-medium leading-relaxed">{error}</p>
+                      </div>
+                    </div>
                   ) : currentResult ? (
                     <KanjiRecursiveResult data={currentResult.data} word={currentResult.word} />
                   ) : (
-                    <div className="text-center py-32 border-2 border-dashed border-slate-200 rounded-[40px] bg-white/50 space-y-6 max-w-3xl mx-auto">
-                       <div className="size-20 bg-white border border-slate-100 shadow-xl shadow-slate-200/50 rounded-3xl flex items-center justify-center mx-auto rotate-3 hover:rotate-0 transition-transform duration-500">
-                         <Search className="size-10 text-blue-600" />
-                       </div>
-                       <div className="space-y-2">
-                         <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Ready to Analyze</p>
-                         <p className="text-sm text-slate-600 font-medium">단어를 입력하여 한자의 깊은 구조와 유래를 확인하세요</p>
-                       </div>
-                       <div className="flex items-center justify-center gap-3">
-                         {[
-                           { label: "간단", value: "簡単" },
-                           { label: "우울", value: "憂鬱" },
-                           { label: "한자", value: "漢字" }
-                         ].map(sample => (
-                           <button 
-                            key={sample.label}
-                            onClick={() => handleKanjiSubmit(sample.value)}
-                            className="px-4 py-2 rounded-full bg-white border border-slate-100 text-xs font-bold text-blue-600 hover:border-blue-200 hover:shadow-md transition-all"
-                           >
-                             #{sample.label}
-                           </button>
-                         ))}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                       <div className="md:col-span-3 flex flex-col items-center justify-center py-24 space-y-8 rounded-[40px] bg-white border border-slate-100 shadow-sm relative overflow-hidden group">
+                         <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+                            <Command className="size-48 rotate-12" />
+                         </div>
+                         <div className="size-16 bg-slate-50 rounded-3xl flex items-center justify-center shadow-inner text-slate-300">
+                           <Search className="size-8" />
+                         </div>
+                         <div className="text-center space-y-2 relative z-10">
+                           <p className="text-sm font-black text-slate-900 uppercase tracking-tight">Intelligence at your fingertips</p>
+                           <p className="text-xs text-slate-500 font-medium max-w-[280px]">Dive deep into the roots of Japanese characters with AI-powered insights.</p>
+                         </div>
+                         <div className="flex items-center gap-3 relative z-10">
+                           {[
+                             { label: "Simple", value: "簡単" },
+                             { label: "Complex", value: "憂鬱" },
+                             { label: "Classic", value: "漢字" }
+                           ].map(sample => (
+                             <button 
+                              key={sample.label}
+                              onClick={() => handleKanjiSubmit(sample.value)}
+                              className="px-4 py-2 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-600 hover:border-blue-400 hover:text-blue-600 hover:-translate-y-1 transition-all shadow-sm active:scale-95"
+                             >
+                               {sample.value}
+                             </button>
+                           ))}
+                         </div>
                        </div>
                     </div>
                   )}
@@ -354,7 +367,7 @@ export default function KanjiDashboard({ user, onLogout, currentPath, navigateTo
             </main>
           </>
         ) : (
-          <main className="flex-1 overflow-y-auto p-10 bg-slate-50">
+          <main className="flex-1 overflow-y-auto p-10 bg-[#fafafa]">
             <div className="max-w-5xl mx-auto">
               {activeTab === "history" ? (
                 <>
@@ -370,27 +383,23 @@ export default function KanjiDashboard({ user, onLogout, currentPath, navigateTo
                     onReAnalyze={handleReAnalyze}
                   />
 
-                  {/* 히스토리 상세 분석 다이얼로그 (오버레이) */}
                   <Dialog 
                     open={!!historyAnalysisResult} 
                     onOpenChange={(open) => !open && setHistoryAnalysisResult(null)}
                   >
-                    <DialogContent className="max-w-5xl h-[90vh] overflow-y-auto rounded-3xl border-none shadow-2xl p-0 bg-slate-50">
-                      <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-100 p-6 flex items-center justify-between">
+                    <DialogContent className="max-w-5xl h-[90vh] overflow-y-auto rounded-xl border-none shadow-2xl p-0 bg-white">
+                      <div className="sticky top-0 z-50 bg-white border-b border-slate-100 p-4 flex items-center justify-between">
                         <div>
-                          <DialogTitle className="text-xl font-black text-slate-900 flex items-center gap-2">
-                            <History className="size-5 text-blue-600" />
-                            History Record: <span className="text-blue-600">{historyAnalysisResult?.word}</span>
+                          <DialogTitle className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                            <Clock className="size-4 text-slate-400" />
+                            Record: <span className="text-slate-900">{historyAnalysisResult?.word}</span>
                           </DialogTitle>
-                          <DialogDescription className="text-xs font-medium text-slate-500 mt-0.5">
-                            과거에 분석했던 단어의 상세 정보입니다.
-                          </DialogDescription>
                         </div>
                         <Button 
                           variant="ghost" 
                           size="sm" 
                           onClick={() => setHistoryAnalysisResult(null)}
-                          className="rounded-full font-bold"
+                          className="h-8 text-xs font-semibold"
                         >
                           Close
                         </Button>
@@ -418,15 +427,14 @@ export default function KanjiDashboard({ user, onLogout, currentPath, navigateTo
         )}
       </div>
 
-      <div className="fixed right-8 bottom-8 z-40">
+      <div className="fixed right-6 bottom-6 z-40">
         <Button
           variant="default"
           size="icon"
-          className="h-16 w-16 rounded-3xl shadow-2xl hover:scale-110 active:scale-95 transition-all group border-0"
-          style={{ background: "linear-gradient(135deg, #3B82F6 0%, #10b981 100%)" }}
+          className="h-12 w-12 rounded-full shadow-lg bg-slate-900 hover:bg-slate-800 text-white border-0 transition-transform active:scale-95"
           onClick={() => setIsSidebarOpen(true)}
         >
-          <Sparkles className="h-7 w-7 text-white group-hover:animate-slow-spin" />
+          <Sparkles className="h-5 w-5" />
         </Button>
       </div>
 
