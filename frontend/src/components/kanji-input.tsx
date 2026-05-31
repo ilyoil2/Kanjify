@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { motion } from "framer-motion"
 import { Search, Loader2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 
@@ -20,6 +21,7 @@ export function KanjiInput({ onSubmit, isLoading = false }: KanjiInputProps) {
   }
 
   const isValidInput = inputValue.length >= 1 && inputValue.length <= 6 && !isInvalid
+  const showActiveButton = isValidInput || isLoading
 
   return (
     <div className="w-full">
@@ -43,22 +45,36 @@ export function KanjiInput({ onSubmit, isLoading = false }: KanjiInputProps) {
               </div>
             )}
           </div>
-          <button
+          <motion.button
             type="submit"
             disabled={!isValidInput || isLoading}
-            className={`px-5 h-11 rounded-xl text-[11px] font-black uppercase tracking-wider flex items-center gap-2.5 transition-all active:scale-95 shadow-sm ${
-              isValidInput && !isLoading 
-                ? "bg-slate-900 text-white hover:bg-blue-600 hover:shadow-blue-200" 
+            whileHover={isValidInput && !isLoading ? { y: -1 } : undefined}
+            whileTap={isValidInput && !isLoading ? { scale: 0.96 } : undefined}
+            className={`group/analyze relative overflow-hidden px-5 h-11 rounded-xl text-[11px] font-black uppercase tracking-wider flex items-center gap-2.5 transition-all shadow-sm ${
+              showActiveButton
+                ? "bg-slate-900 text-white hover:shadow-md hover:shadow-blue-200/70 disabled:cursor-wait" 
                 : "bg-slate-50 text-slate-300 cursor-not-allowed border border-slate-100"
             }`}
           >
-            {isLoading ? (
-              <Loader2 className="size-3.5 animate-spin" />
-            ) : (
-              <Search className="size-3.5" />
+            {isValidInput && !isLoading && (
+              <motion.span
+                aria-hidden="true"
+                animate={{ backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
+                transition={{ duration: 9, repeat: Infinity, ease: "linear" }}
+                className="absolute inset-0 opacity-0 transition-opacity duration-500 group-hover/analyze:opacity-100"
+                style={{
+                  backgroundImage: "linear-gradient(135deg, #2563eb 0%, #c4b5fd 50%, #3B82F6 100%)",
+                  backgroundSize: "220% 220%",
+                }}
+              />
             )}
-            {isLoading ? "Wait" : "Analyze"}
-          </button>
+            {isLoading ? (
+              <Loader2 className="relative z-10 size-3.5 animate-spin" />
+            ) : (
+              <Search className="relative z-10 size-3.5" />
+            )}
+            <span className="relative z-10">{isLoading ? "Wait" : "Analyze"}</span>
+          </motion.button>
         </div>
       </form>
       

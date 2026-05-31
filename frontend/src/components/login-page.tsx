@@ -65,9 +65,11 @@ export function LoginPage({
         <div className="h-2 bg-blue-600 w-full" />
         <CardHeader className="space-y-1 text-center pt-8 pb-4">
           <div className="flex justify-center mb-4">
-            <div className="size-16 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-200">
-              <Hash className="size-10 text-white" />
-            </div>
+            <img
+              src="/logo.png"
+              alt="Kanjify"
+              className="size-16 rounded-2xl object-contain shadow-lg shadow-blue-200"
+            />
           </div>
           <CardTitle className="text-3xl font-black tracking-tighter text-gray-900">
             Kanjify

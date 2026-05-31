@@ -65,9 +65,11 @@ export function SignupPage({
         
         <CardHeader className="space-y-1 text-center pt-8 pb-4">
           <div className="flex justify-center mb-4">
-            <div className="size-16 rounded-2xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-200">
-              <UserPlus className="size-10 text-white" />
-            </div>
+            <img
+              src="/logo.png"
+              alt="Kanjify"
+              className="size-16 rounded-2xl object-contain shadow-lg shadow-indigo-200"
+            />
           </div>
           <CardTitle className="text-3xl font-black tracking-tighter text-gray-900">
             Create Account

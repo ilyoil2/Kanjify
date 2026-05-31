@@ -7,7 +7,7 @@ import {
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu"
-import { LogOut, User, Settings, ChevronDown, Command, Sparkles } from "lucide-react"
+import { LogOut, User, Settings, ChevronDown } from "lucide-react"
 
 interface NavbarProps {
   activeTab: string
@@ -36,9 +36,11 @@ export function Navbar({ activeTab, onTabChange, user, onLogout, onSettingsClick
               onClick={() => onTabChange("main")}
               className="flex items-center gap-2.5 group transition-all"
             >
-              <div className="size-7 bg-slate-900 rounded-lg flex items-center justify-center shadow-lg shadow-slate-200 group-hover:rotate-6 transition-transform">
-                <Command className="size-4 text-white" />
-              </div>
+              <img
+                src="/logo.png"
+                alt="Kanjify"
+                className="size-8 rounded-lg object-contain shadow-lg shadow-slate-200 group-hover:rotate-6 transition-transform"
+              />
               <span className="text-sm font-black tracking-tighter text-slate-900">
                 Kanjify <span className="text-blue-600">.</span>
               </span>
