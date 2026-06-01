@@ -27,7 +27,7 @@ export function SignupPage({
 
     setIsLoading(true)
     try {
-      const response = await fetch("http://localhost:8000/api/signup/", {
+      const response = await fetch("http://localhost:8002/api/signup/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

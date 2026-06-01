@@ -111,7 +111,7 @@ export default function KanjiDashboard({ user, onLogout, currentPath, navigateTo
     setError(null)
     try {
       const userEmail = user?.email
-      const url = userEmail ? `http://localhost:8000/api/history/?email=${userEmail}` : "http://localhost:8000/api/history/"
+      const url = userEmail ? `http://localhost:8002/api/history/?email=${userEmail}` : "http://localhost:8002/api/history/"
       
       const response = await fetch(url)
       if (!response.ok) {
@@ -139,7 +139,7 @@ export default function KanjiDashboard({ user, onLogout, currentPath, navigateTo
     setError(null)
     
     try {
-      const response = await fetch("http://localhost:8000/api/analyze-kanji/", {
+      const response = await fetch("http://localhost:8002/api/analyze-kanji/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
@@ -184,7 +184,7 @@ export default function KanjiDashboard({ user, onLogout, currentPath, navigateTo
 
   const deleteBackendHistoryEntry = async (id: number) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/history/?id=${id}&email=${user?.email || ""}`, {
+      const response = await fetch(`http://localhost:8002/api/history/?id=${id}&email=${user?.email || ""}`, {
         method: 'DELETE'
       })
       if (!response.ok) throw new Error("삭제 실패")

@@ -7,7 +7,7 @@ Kanjify monorepo
 ./dev.sh
 ```
 
-- Django API: http://localhost:8000
+- Django API: http://localhost:8002
 - Vite web server: http://localhost:3002
 
 Stop both servers with `Ctrl-C`.
