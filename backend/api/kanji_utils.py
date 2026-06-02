@@ -2,21 +2,31 @@ def extract_kanjis(text):
     return [c for c in text if '一' <= c <= '鿿' or '㐀' <= c <= '䶿']
 
 
-def extract_radical_char(radical_desc_ko):
-    if not radical_desc_ko:
-        return None
-    first = radical_desc_ko[0]
-    if '一' <= first <= '鿿' or '㐀' <= first <= '䶿':
-        return first
-    return None
+def _is_cjk(ch):
+    cp = ord(ch)
+    return (0x3400 <= cp <= 0x9FFF) or cp >= 0x20000
+
+
+def extract_components_from_etymology(etymology):
+    """'百(일백 백) + 冖(덮을 멱)' 형식에서 ( 바로 앞 한자를 추출."""
+    if not etymology:
+        return []
+    results = []
+    for i, ch in enumerate(etymology):
+        if i + 1 < len(etymology) and etymology[i + 1] == '(' and _is_cjk(ch):
+            if ch not in results:
+                results.append(ch)
+    return results
 
 
 def db_kanji_to_node(kanji_obj):
-    radical_char = extract_radical_char(kanji_obj.radical_desc_ko)
+    components = extract_components_from_etymology(kanji_obj.etymology)
+    # 자기 자신이 포함되는 경우 제거
+    components = [c for c in components if c != kanji_obj.kanji]
     return {
         "reading": kanji_obj.korean_reading or "",
         "meaning": kanji_obj.korean_reading_detail or "",
-        "components": [radical_char] if radical_char else [],
+        "components": components,
         "is_ai_generated": False,
         "db_detail": {
             "korean_reading_detail": kanji_obj.korean_reading_detail,

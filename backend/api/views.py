@@ -51,7 +51,7 @@ class VocabularyViewSet(viewsets.ModelViewSet):
 
         return Vocabulary.objects.exclude(
             id__in=hidden_ids
-        ).order_by('-created_at')
+        ).order_by('-id')
 
     @action(detail=False, methods=['post'])
     def hide(self, request):
@@ -253,10 +253,16 @@ def analyze_kanji_view(request):
             nodes[char] = node
             radical_chars.update(node["components"])
 
-        # 5. 부수도 DB에서 조회해 nodes에 포함
-        extra_to_fetch = radical_chars - set(nodes.keys())
-        for k in Kanji.objects.filter(kanji__in=extra_to_fetch):
-            nodes[k.kanji] = db_kanji_to_node(k)
+        # 5. 컴포넌트를 재귀적으로 모두 DB에서 조회
+        to_fetch = radical_chars - set(nodes.keys())
+        depth = 0
+        while to_fetch and depth < 5:
+            for k in Kanji.objects.filter(kanji__in=to_fetch):
+                node = db_kanji_to_node(k)
+                nodes[k.kanji] = node
+                to_fetch |= {c for c in node["components"] if c not in nodes}
+            to_fetch -= set(nodes.keys())
+            depth += 1
 
         # 6. AI 생성 노드에 is_ai_generated 마킹
         for char in list(nodes.keys()):
