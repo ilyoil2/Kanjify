@@ -15,7 +15,7 @@ from .serializers import VocabularySerializer
 from .serializers import WordButtonSerializer
 from .serializers import WordStatusSerializer
 from .ai_utils import analyze_kanji
-from .kanji_utils import extract_kanjis, extract_radical_char, db_kanji_to_node
+from .kanji_utils import extract_kanjis, db_kanji_to_node
 
 logger = logging.getLogger(__name__)
 
