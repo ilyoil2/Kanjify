@@ -69,3 +69,11 @@ class DbKanjiToNodeTest(TestCase):
     def test_no_radical(self):
         node = db_kanji_to_node(self._make_kanji(radical_desc_ko=None))
         self.assertEqual(node["components"], [])
+
+    def test_reading_and_meaning_mapping(self):
+        node = db_kanji_to_node(self._make_kanji(
+            korean_reading="약할 약",
+            korean_reading_detail="약할 약, 가냘플 약",
+        ))
+        self.assertEqual(node["reading"], "약할 약")
+        self.assertEqual(node["meaning"], "약할 약, 가냘플 약")
