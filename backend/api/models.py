@@ -1,7 +1,7 @@
 from django.db import models
 
 class Vocabulary(models.Model):
-    word = models.TextField()
+    word = models.TextField(null=True, blank=True)
     korean_reading_detail = models.TextField(null=True, blank=True)
     korean_reading = models.TextField(null=True, blank=True)
     radical_desc_ko = models.TextField(null=True, blank=True)
@@ -85,7 +85,7 @@ class WordStatus(models.Model):
         db_table = 'tbl_word_status'
 
 class Kanji(models.Model):
-    kanji = models.CharField(max_length=10)
+    kanji = models.TextField(null=True, blank=True)
     korean_reading_detail = models.TextField(null=True, blank=True)
     korean_reading = models.TextField(null=True, blank=True)
     radical_desc_ko = models.TextField(null=True, blank=True)
