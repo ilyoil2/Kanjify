@@ -11,51 +11,45 @@ logger = logging.getLogger(__name__)
 
 load_dotenv()
 
-PROMPT_TEMPLATE = """너는 세계 최고의 한자 어원 및 계통학 전문가이다. 사용자가 입력한 단어에 대해 자원(字源)에 근거한 한자 구조 분석과 실용 예문 3개를 JSON으로 응답하라.
+def build_prompt(word, missing_kanjis=None):
+    if missing_kanjis:
+        missing_list = ", ".join(missing_kanjis)
+        missing_nodes_instruction = f"""
+또한 다음 한자들은 DB에 없으므로 AI가 직접 분석하여 nodes에 포함하라: {missing_list}
+각 한자에 대해 한국어 사전 기준으로 reading(음), meaning(훈)을 작성하고 components를 분석하라.
+"""
+    else:
+        missing_nodes_instruction = "nodes는 빈 객체 {}로 반환하라."
 
-[분석 지침]
-1. 한자 어원 분석: 각 한자를 역사적 유래와 자원(字源)에 근거하여 분석하라.
-2. 계층적 분해: 각 한자의 구성요소를 'nodes'에 담으라. 더 이상 나뉘지 않을 때까지 재귀적으로 분석하라.
-3. 예문: 실용 예문 3개를 작성하라.
+    return f"""너는 한자 전문가이다. 아래 단어에 대해 word_info, examples, nodes를 JSON으로 응답하라.
 
 [중요: 데이터 정의]
-- 'meaning': 한자의 **훈(뜻)**을 말한다. (예: '人'의 경우 "사람", '弱'의 경우 "약할")
-- 'reading': 한자의 **음**을 말한다. (예: '人'의 경우 "인", '弱'의 경우 "약")
-- 반드시 한국어 한자 사전 기준으로 응답하라. 일본어 발음(요와, 야스 등)이나 중국어 발음을 'reading'에 넣지 마라.
-
-[절대 규칙]
-1. 반드시 JSON으로만 응답하라.
-2. 모든 노드는 반드시 뜻(meaning)과 음(reading)을 한국어 사전 기준으로 분리하라.
-   - 예: "人": {{"meaning": "사람", "reading": "인", "components": []}}
-   - 예: "弱": {{"meaning": "약할", "reading": "약", "components": ["弓", "冫"]}}
-
----
+- 'meaning': 한자의 훈(뜻). 예: '人' → "사람", '弱' → "약할"
+- 'reading': 한자의 음. 예: '人' → "인", '弱' → "약"
+- 반드시 한국어 한자 사전 기준으로 응답하라.
 
 [출력 형식]
 {{
   "word_info": {{
-    "meaning_ko": "단어 전체의 뜻",
-    "reading_hiragana": "일본어 히라가나 발음",
-    "reading_katakana": "일본어 가타카나 발음"
+    "meaning_ko": "단어 전체의 한국어 뜻",
+    "reading_hiragana": "히라가나 발음",
+    "reading_katakana": "가타카나 발음"
   }},
   "examples": [
-    {{ "sentence": "일본어 문장", "reading": "문장 읽는 법", "meaning": "한국어 해석" }},
-    {{ "sentence": "문장2", "reading": "발음2", "meaning": "해석2" }},
-    {{ "sentence": "문장3", "reading": "발음3", "meaning": "해석3" }}
+    {{"sentence": "일본어 문장", "reading": "읽기", "meaning": "한국어 해석"}},
+    {{"sentence": "문장2", "reading": "발음2", "meaning": "해석2"}},
+    {{"sentence": "문장3", "reading": "발음3", "meaning": "해석3"}}
   ],
   "nodes": {{
-    "한자": {{
-      "reading": "음",
-      "meaning": "뜻",
-      "components": ["요소1", "요소2"]
-    }}
+    "한자": {{"reading": "음", "meaning": "뜻", "components": ["구성요소"]}}
   }},
   "confidence": "high"
 }}
 
----
+{missing_nodes_instruction}
 
 입력: "{word}"
+반드시 JSON으로만 응답하라.
 """
 
 def call_openrouter(prompt, model_name="openrouter/owl-alpha"):
@@ -140,13 +134,12 @@ def parse_json_from_response(text):
                 pass
         return None
 
-def analyze_kanji(word):
-    prompt = PROMPT_TEMPLATE.format(word=word)
+def analyze_kanji(word, missing_kanjis=None):
+    prompt = build_prompt(word, missing_kanjis)
 
-    # 1. Google Gemini 우선 사용
     logger.info(f"--- Attempting analysis via direct Gemini for: {word} ---")
     text, gem_error = call_gemini(prompt)
-    
+
     if text:
         result = parse_json_from_response(text)
         if result:
@@ -156,11 +149,10 @@ def analyze_kanji(word):
     else:
         logger.error(f"Direct Gemini failed: {gem_error}")
 
-    # 2. Gemini 실패 시 OpenRouter 무료 상위 모델만 사용
     openrouter_model = "openrouter/owl-alpha"
     logger.info(f"--- Attempting fallback via OpenRouter ({openrouter_model}) for: {word} ---")
     text, or_error = call_openrouter(prompt, openrouter_model)
-    
+
     if text:
         result = parse_json_from_response(text)
         if result and "nodes" in result:
@@ -170,7 +162,6 @@ def analyze_kanji(word):
     else:
         logger.error(f"OpenRouter failed: {or_error}")
 
-    # 3. 모든 시도 실패
     return {
         "error": "모든 AI 서비스 호출 및 모델 폴백에 실패했습니다.",
         "details": f"DirectGemini: {gem_error} | OpenRouter({openrouter_model}): {or_error}"
