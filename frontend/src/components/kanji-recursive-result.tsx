@@ -6,6 +6,19 @@ export interface KanjiNode {
   reading: string
   meaning: string
   components: string[]
+  is_ai_generated?: boolean
+  db_detail?: {
+    korean_reading_detail: string | null
+    onyomi: string | null
+    kunyomi: string | null
+    etymology: string | null
+    stroke_count_ko: string | null
+    stroke_count_ja: string | null
+    radical_desc_ko: string | null
+    radical_ja: string | null
+    level: string | null
+    meaning_ja: string | null
+  } | null
 }
 
 export interface Example {
@@ -68,6 +81,9 @@ function RecursiveComponent({
           <div className="flex items-center gap-1.5">
             <span className="text-[15px] font-black text-slate-900 tracking-tighter">{node.meaning}</span>
             <span className={`text-[15px] font-black ${textActive} tracking-tighter`}>{node.reading}</span>
+            {node.is_ai_generated && (
+              <span className="ml-1 text-xs text-amber-500 font-medium">(AI 분석)</span>
+            )}
           </div>
           {node.components.length === 0 && (
             <span className="text-[9px] font-bold text-slate-300 uppercase tracking-widest mt-0.5">
