@@ -1,31 +1,12 @@
-import { useState, useMemo, useEffect } from "react"
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  Trash2, 
-  Search, 
-  ExternalLink, 
-  Volume2,
-  MoreHorizontal,
-  Clock,
-  ArrowUpDown
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
+import { useState, useMemo } from "react"
+import { Search, ExternalLink, Trash2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
-import { 
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { toast } from "sonner"
 
 interface HistoryItem {
   id: number
   word: string
   meaning: string
-  timestamp: string
+  timestamp: string | number
 }
 
 interface HistoryPageProps {
@@ -35,272 +16,138 @@ interface HistoryPageProps {
   onReAnalyze: (word: string) => void
 }
 
-const ITEMS_PER_PAGE = 20 // Increased density
+interface DateGroup {
+  label: string
+  items: HistoryItem[]
+}
+
+function isSameDay(a: Date, b: Date): boolean {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  )
+}
+
+function getDateLabel(timestamp: string | number, now: Date): string {
+  const date = new Date(timestamp)
+  const yesterday = new Date(now)
+  yesterday.setDate(now.getDate() - 1)
+
+  if (isSameDay(date, now)) return "오늘"
+  if (isSameDay(date, yesterday)) return "어제"
+  return new Intl.DateTimeFormat("ko-KR", { month: "long", day: "numeric" }).format(date)
+}
+
+function formatTime(timestamp: string | number): string {
+  const d = new Date(timestamp)
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`
+}
 
 export function HistoryPage({ history, onDeleteEntry, onClearHistory, onReAnalyze }: HistoryPageProps) {
-  const [currentPage, setCurrentPage] = useState<number>(1)
-  const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set())
   const [searchTerm, setSearchTerm] = useState("")
-  const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc")
 
-  const playPronunciation = (text: string) => {
-    if (!window.speechSynthesis) {
-      toast.error("이 브라우저는 음성 재생을 지원하지 않습니다.")
-      return
+  const groups: DateGroup[] = useMemo(() => {
+    const now = new Date()
+    const filtered = history
+      .filter(
+        (item) =>
+          item.word.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          item.meaning.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+
+    const map = new Map<string, HistoryItem[]>()
+    for (const item of filtered) {
+      const label = getDateLabel(item.timestamp, now)
+      if (!map.has(label)) map.set(label, [])
+      map.get(label)!.push(item)
     }
-    window.speechSynthesis.cancel()
-    const utterance = new SpeechSynthesisUtterance(text)
-    const voices = window.speechSynthesis.getVoices()
-    const preferredVoice = 
-      voices.find(v => v.name.includes("Kyoko")) || 
-      voices.find(v => v.name.includes("Otoya")) || 
-      voices.find(v => v.lang === "ja-JP" || v.lang === "ja_JP")
-    if (preferredVoice) utterance.voice = preferredVoice
-    utterance.lang = "ja-JP"
-    utterance.rate = 0.9
-    window.speechSynthesis.speak(utterance)
-  }
 
-  useEffect(() => {
-    if (window.speechSynthesis.onvoiceschanged !== undefined) {
-      window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices()
-    }
-  }, [])
+    return Array.from(map.entries()).map(([label, items]) => ({ label, items }))
+  }, [history, searchTerm])
 
-  const filteredHistory = useMemo(() => {
-    const filtered = history.filter(item => 
-      item.word.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.meaning.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-    return filtered.sort((a, b) => {
-      const dateA = new Date(a.timestamp).getTime()
-      const dateB = new Date(b.timestamp).getTime()
-      return sortOrder === "desc" ? dateB - dateA : dateA - dateB
-    })
-  }, [history, searchTerm, sortOrder])
-
-  const totalPages = Math.max(1, Math.ceil(filteredHistory.length / ITEMS_PER_PAGE))
-  const currentItems = filteredHistory.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  )
-
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedItems(new Set(currentItems.map(item => item.id)))
-    } else {
-      setSelectedItems(new Set())
-    }
-  }
-
-  const handleCheckChange = (itemId: number, checked: boolean) => {
-    setSelectedItems((prev) => {
-      const newSet = new Set(prev)
-      if (checked) newSet.add(itemId)
-      else newSet.delete(itemId)
-      return newSet
-    })
-  }
-  
-  const handleDeleteSelected = () => {
-    if (selectedItems.size === 0) return
-    selectedItems.forEach(id => onDeleteEntry(id))
-    setSelectedItems(new Set())
-    toast.success(`${selectedItems.size} items deleted`)
-  }
-
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr)
-    return new Intl.DateTimeFormat('ko-KR', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
-    }).format(date)
-  }
+  const totalCount = history.length
 
   return (
-    <div className="flex flex-col h-full bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
-      {/* Table Header / Toolbar */}
-      <div className="flex items-center justify-between p-4 border-b border-slate-100 bg-slate-50/50">
-        <div className="flex items-center gap-4 flex-1">
-          <div className="relative w-full max-w-xs">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-slate-400" />
-            <Input 
-              placeholder="Search history..." 
-              className="pl-9 h-8 text-xs border-slate-200 focus:ring-1 focus:ring-slate-300 bg-white"
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value)
-                setCurrentPage(1)
-              }}
-            />
-          </div>
-          {selectedItems.size > 0 && (
-            <div className="flex items-center gap-2 animate-in fade-in zoom-in-95 duration-200">
-              <span className="text-[11px] font-medium text-slate-500">{selectedItems.size} selected</span>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={handleDeleteSelected}
-                className="h-7 text-[11px] text-red-600 hover:text-red-700 hover:bg-red-50"
-              >
-                Delete
-              </Button>
-            </div>
-          )}
+    <div className="flex flex-col h-full bg-white overflow-hidden">
+      {/* Toolbar */}
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-[#f0f0ef]">
+        <div className="relative w-48">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-[#9b9a97]" />
+          <Input
+            placeholder="검색..."
+            className="pl-9 h-8 text-xs border-[#e8e8e8] bg-[#f7f7f5] focus-visible:ring-0 focus-visible:border-[#c4c4c0] rounded-md"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
-        <div className="flex items-center gap-2">
-           <Button
-             variant="ghost"
-             size="sm"
-             onClick={() => setSortOrder(prev => prev === "desc" ? "asc" : "desc")}
-             className="h-8 text-xs text-slate-600 gap-1.5"
-           >
-             <ArrowUpDown className="size-3" />
-             {sortOrder === "desc" ? "Newest" : "Oldest"}
-           </Button>
-        </div>
+        <div className="flex-1" />
+        <span className="text-xs text-[#9b9a97]">전체 {totalCount}단어</span>
       </div>
 
-      {/* Table Structure */}
-      <div className="flex-1 overflow-auto">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="border-b border-slate-100 bg-slate-50/30">
-              <th className="p-3 w-10">
-                <Checkbox 
-                  checked={selectedItems.size === currentItems.length && currentItems.length > 0}
-                  onCheckedChange={(checked) => handleSelectAll(checked as boolean)}
-                  className="size-3.5 border-slate-300"
-                />
-              </th>
-              <th className="p-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider w-32">Word</th>
-              <th className="p-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Meaning</th>
-              <th className="p-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider w-40">Date</th>
-              <th className="p-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider w-20 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {currentItems.length > 0 ? (
-              currentItems.map((item) => (
-                <tr 
-                  key={item.id} 
-                  className={`group hover:bg-slate-50/50 transition-colors ${
-                    selectedItems.has(item.id) ? "bg-slate-50/80" : ""
-                  }`}
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto">
+        {groups.length === 0 ? (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-sm text-[#9b9a97]">검색 결과가 없어요</p>
+          </div>
+        ) : (
+          groups.map((group, gi) => (
+            <div key={group.label}>
+              {/* Group header */}
+              <div className={`px-4 pt-4 pb-1.5 ${gi > 0 ? "border-t border-[#f0f0ef]" : ""}`}>
+                <span className="text-[10px] font-semibold text-[#9b9a97] uppercase tracking-widest">
+                  {group.label}
+                </span>
+              </div>
+
+              {/* Rows */}
+              {group.items.map((item) => (
+                <div
+                  key={item.id}
+                  className="group/row flex items-center gap-4 mx-2 px-3 py-2.5 rounded-md hover:bg-[#f7f7f5] transition-colors"
                 >
-                  <td className="p-3">
-                    <Checkbox
-                      checked={selectedItems.has(item.id)}
-                      onCheckedChange={(checked) => handleCheckChange(item.id, checked as boolean)}
-                      className="size-3.5 border-slate-300"
-                    />
-                  </td>
-                  <td className="p-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-slate-900">{item.word}</span>
-                      <button
-                        onClick={() => playPronunciation(item.word)}
-                        className="p-1 rounded hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors opacity-0 group-hover:opacity-100"
-                      >
-                        <Volume2 className="size-3" />
-                      </button>
-                    </div>
-                  </td>
-                  <td className="p-3">
-                    <span className="text-sm text-slate-600 line-clamp-1">{item.meaning}</span>
-                  </td>
-                  <td className="p-3">
-                    <div className="flex items-center gap-1.5 text-xs text-slate-400 tabular-nums">
-                      <Clock className="size-3" />
-                      {formatDate(item.timestamp)}
-                    </div>
-                  </td>
-                  <td className="p-3 text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => onReAnalyze(item.word)}
-                        className="size-7 text-slate-400 hover:text-blue-600"
-                        title="Re-analyze"
-                      >
-                        <ExternalLink className="size-3.5" />
-                      </Button>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="size-7 text-slate-400">
-                            <MoreHorizontal className="size-3.5" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-32">
-                          <DropdownMenuItem 
-                            onClick={() => onDeleteEntry(item.id)}
-                            className="text-red-600 focus:text-red-600 focus:bg-red-50 text-xs"
-                          >
-                            <Trash2 className="size-3.5 mr-2" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={5} className="p-12 text-center">
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="p-3 rounded-full bg-slate-50 border border-slate-100">
-                      <Search className="size-5 text-slate-300" />
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium text-slate-900">No results found</p>
-                      <p className="text-xs text-slate-500">Try adjusting your search or filters.</p>
-                    </div>
+                  {/* Kanji (large) */}
+                  <div className="min-w-[60px] text-center">
+                    <span className="text-xl font-bold text-[#37352f] leading-tight">
+                      {item.word}
+                    </span>
                   </div>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
 
-      {/* Footer / Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between p-4 border-t border-slate-100 bg-slate-50/30">
-          <div className="text-[11px] text-slate-500 font-medium">
-            Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, filteredHistory.length)} of {filteredHistory.length} results
-          </div>
-          <div className="flex items-center gap-1.5">
-            <Button
-              variant="outline"
-              size="icon"
-              className="size-8 rounded border-slate-200"
-              onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-              disabled={currentPage === 1}
-            >
-              <ChevronLeft className="size-3.5" />
-            </Button>
-            <div className="flex items-center gap-1 px-2">
-              <span className="text-xs font-semibold text-slate-900">{currentPage}</span>
-              <span className="text-xs text-slate-400">/</span>
-              <span className="text-xs text-slate-400">{totalPages}</span>
+                  {/* Meaning + Time */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-[#787774] leading-relaxed truncate">
+                      {item.meaning}
+                    </p>
+                    <p className="text-[10px] text-[#c4c4c0] mt-0.5">
+                      {formatTime(item.timestamp)}
+                    </p>
+                  </div>
+
+                  {/* Actions (hover only) */}
+                  <div className="flex items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => onReAnalyze(item.word)}
+                      className="w-6 h-6 rounded flex items-center justify-center bg-[#e8e8e8] hover:bg-[#d4d4d0] transition-colors"
+                      title="다시 분석"
+                    >
+                      <ExternalLink className="size-3 text-[#787774]" />
+                    </button>
+                    <button
+                      onClick={() => onDeleteEntry(item.id)}
+                      className="w-6 h-6 rounded flex items-center justify-center bg-[#e8e8e8] hover:bg-red-100 transition-colors group/del"
+                      title="삭제"
+                    >
+                      <Trash2 className="size-3 text-[#787774] group-hover/del:text-red-500 transition-colors" />
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
-            <Button
-              variant="outline"
-              size="icon"
-              className="size-8 rounded border-slate-200"
-              onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
-              disabled={currentPage === totalPages}
-            >
-              <ChevronRight className="size-3.5" />
-            </Button>
-          </div>
-        </div>
-      )}
+          ))
+        )}
+      </div>
     </div>
   )
 }
