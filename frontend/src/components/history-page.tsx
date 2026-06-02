@@ -6,7 +6,7 @@ interface HistoryItem {
   id: number
   word: string
   meaning: string
-  timestamp: string | number
+  timestamp: string | number 
 }
 
 interface HistoryPageProps {
