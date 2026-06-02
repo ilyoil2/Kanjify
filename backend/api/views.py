@@ -10,11 +10,12 @@ from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, status
 from rest_framework.decorators import api_view, action
 from rest_framework.response import Response
-from .models import Vocabulary, Word, User, SearchHistory, WordButton, WordStatus
+from .models import Vocabulary, Word, User, SearchHistory, WordButton, WordStatus, Kanji
 from .serializers import VocabularySerializer
 from .serializers import WordButtonSerializer
 from .serializers import WordStatusSerializer
 from .ai_utils import analyze_kanji
+from .kanji_utils import extract_kanjis, extract_radical_char, db_kanji_to_node
 
 logger = logging.getLogger(__name__)
 
@@ -221,34 +222,56 @@ def save_analysis_to_db(word_text, result, user_email=None):
 def analyze_kanji_view(request):
     try:
         word = request.data.get('word')
-        user_email = request.data.get('email') # 유저 식별용
-        skip_history = request.data.get('skip_history', False) # 히스토리 저장 스킵 여부
+        user_email = request.data.get('email')
+        skip_history = request.data.get('skip_history', False)
 
         if not word:
             return Response({"error": "word is required"}, status=status.HTTP_400_BAD_REQUEST)
-        
-        # 1. DB 캐시 확인
+
+        # 1. 캐시 확인
         cached = Word.objects.filter(input_text=word).first()
         if cached:
-            # 캐시가 있어도 히스토리는 남김 (skip_history가 False일 때만)
             if not skip_history:
                 threading.Thread(target=save_analysis_to_db, args=(word, cached.result_data, user_email)).start()
             return Response(cached.result_data)
-        
-        # 2. 캐시 없으면 AI 호출
-        result = analyze_kanji(word)
+
+        # 2. 한자 분리 및 DB 조회
+        chars = extract_kanjis(word)
+        db_kanjis = {k.kanji: k for k in Kanji.objects.filter(kanji__in=chars)}
+        missing = [c for c in chars if c not in db_kanjis]
+
+        # 3. AI 호출 (word_info + examples + missing nodes)
+        result = analyze_kanji(word, missing_kanjis=missing)
         if "error" in result:
             return Response(result, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-        # 3. 백그라운드 저장 (skip_history 확인)
+
+        # 4. nodes 조립: DB 한자 추가 (AI 노드 덮어쓰기)
+        nodes = result.get("nodes", {})
+        radical_chars = set()
+        for char, kanji_obj in db_kanjis.items():
+            node = db_kanji_to_node(kanji_obj)
+            nodes[char] = node
+            radical_chars.update(node["components"])
+
+        # 5. 부수도 DB에서 조회해 nodes에 포함
+        extra_to_fetch = radical_chars - set(nodes.keys())
+        for k in Kanji.objects.filter(kanji__in=extra_to_fetch):
+            nodes[k.kanji] = db_kanji_to_node(k)
+
+        # 6. AI 생성 노드에 is_ai_generated 마킹
+        for char in list(nodes.keys()):
+            if char not in db_kanjis and "is_ai_generated" not in nodes[char]:
+                nodes[char]["is_ai_generated"] = True
+                nodes[char]["db_detail"] = None
+
+        result["nodes"] = nodes
+
+        # 7. 저장 및 반환
         if not skip_history:
             threading.Thread(target=save_analysis_to_db, args=(word, result, user_email)).start()
-        else:
-            # 히스토리는 안 남겨도 Word 캐시는 남김 (별도 함수 호출하거나 save_analysis_to_db 내부 수정 필요)
-            # 여기서는 단순히 히스토리 생성을 막는 목적이므로 스킵
-            pass
-            
+
         return Response(result)
+
     except Exception as e:
         logger.error(f"Unexpected error in analyze_kanji_view: {e}")
         logger.error(traceback.format_exc())
