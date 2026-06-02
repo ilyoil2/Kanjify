@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { ChevronRight, BookOpen, AlertCircle, Volume2, X } from "lucide-react"
+import { ChevronRight, BookOpen, AlertCircle, Volume2, X, RefreshCw, Pencil } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
 export interface KanjiNode {
@@ -44,6 +44,8 @@ interface KanjiRecursiveResultProps {
   data: KanjiRecursiveData
   word: string
   variant?: "default" | "history"
+  onDeleteCache?: () => void
+  onUpdateCache?: (updates: { word_info?: Partial<WordInfo>, examples?: Example[] }) => Promise<void>
 }
 
 function stripHtml(html: string | null): string {
@@ -199,10 +201,31 @@ function RecursiveComponent({
   )
 }
 
-export function KanjiRecursiveResult({ data, word, variant = "default" }: KanjiRecursiveResultProps) {
+export function KanjiRecursiveResult({ data, word, variant = "default", onDeleteCache, onUpdateCache }: KanjiRecursiveResultProps) {
   const rootChars = Array.from(word).filter(c => data.nodes[c])
   const isHistory = variant === "history"
   const [selectedKanji, setSelectedKanji] = useState<string | null>(null)
+  const [editOpen, setEditOpen] = useState(false)
+  const [editData, setEditData] = useState({ word_info: data.word_info, examples: data.examples ?? [] })
+  const [saving, setSaving] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+
+  const handleDelete = async () => {
+    if (!onDeleteCache) return
+    setDeleting(true)
+    onDeleteCache()
+  }
+
+  const handleSave = async () => {
+    if (!onUpdateCache) return
+    setSaving(true)
+    try {
+      await onUpdateCache({ word_info: editData.word_info, examples: editData.examples })
+      setEditOpen(false)
+    } finally {
+      setSaving(false)
+    }
+  }
 
   const themeAccent = isHistory ? "indigo" : "blue"
   const themeText = isHistory ? "text-indigo-600" : "text-blue-600"
@@ -227,11 +250,59 @@ export function KanjiRecursiveResult({ data, word, variant = "default" }: KanjiR
     <div className={`space-y-12 pb-20 ${isHistory ? "w-full" : ""}`}>
       <AnimatePresence>
         {selectedKanji && data.nodes[selectedKanji] && (
-          <KanjiDetailModal
-            char={selectedKanji}
-            node={data.nodes[selectedKanji]}
-            onClose={() => setSelectedKanji(null)}
-          />
+          <KanjiDetailModal char={selectedKanji} node={data.nodes[selectedKanji]} onClose={() => setSelectedKanji(null)} />
+        )}
+        {editOpen && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30"
+            onClick={() => setEditOpen(false)}>
+            <motion.div initial={{ y: 16, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 16, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              className="bg-white w-full max-w-lg rounded-xl shadow-2xl border border-slate-200 overflow-hidden max-h-[85vh] flex flex-col"
+              onClick={e => e.stopPropagation()}>
+              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+                <span className="font-semibold text-slate-900">분석 수정 — {word}</span>
+                <button onClick={() => setEditOpen(false)} className="size-7 rounded-md flex items-center justify-center text-slate-400 hover:bg-slate-100 transition-colors"><X className="size-4" /></button>
+              </div>
+              <div className="overflow-y-auto p-5 space-y-5">
+                {editData.word_info && (
+                  <div className="space-y-3">
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest">단어 정보</p>
+                    {(["meaning_ko", "reading_hiragana", "reading_katakana"] as const).map(key => (
+                      <div key={key}>
+                        <label className="text-xs text-slate-400 mb-1 block">{key}</label>
+                        <input className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                          value={(editData.word_info as any)?.[key] ?? ""}
+                          onChange={e => setEditData(d => ({ ...d, word_info: { ...d.word_info, [key]: e.target.value } as WordInfo }))} />
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="space-y-4">
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest">예문</p>
+                  {editData.examples.map((ex, i) => (
+                    <div key={i} className="border border-slate-100 rounded-lg p-3 space-y-2">
+                      <p className="text-xs font-medium text-slate-400">예문 {i + 1}</p>
+                      {(["sentence", "reading", "meaning"] as const).map(field => (
+                        <div key={field}>
+                          <label className="text-[10px] text-slate-300 mb-0.5 block">{field}</label>
+                          <input className="w-full border border-slate-200 rounded-md px-3 py-1.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                            value={ex[field]}
+                            onChange={e => setEditData(d => ({ ...d, examples: d.examples.map((ex2, j) => j === i ? { ...ex2, [field]: e.target.value } : ex2) }))} />
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="px-5 py-4 border-t border-slate-100 flex justify-end gap-2">
+                <button onClick={() => setEditOpen(false)} className="px-4 py-2 text-sm text-slate-500 hover:bg-slate-50 rounded-lg transition-colors">취소</button>
+                <button onClick={handleSave} disabled={saving} className="px-4 py-2 text-sm font-semibold bg-slate-900 text-white rounded-lg hover:bg-slate-700 disabled:opacity-50 transition-colors">
+                  {saving ? "저장 중…" : "저장"}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
 
@@ -242,6 +313,24 @@ export function KanjiRecursiveResult({ data, word, variant = "default" }: KanjiR
       >
         <div className="absolute -right-8 -top-8 size-48 bg-white/5 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-1000" />
         <div className="absolute -left-8 -bottom-8 size-48 bg-blue-400/5 rounded-full blur-3xl" />
+
+        {/* 관리 버튼 */}
+        {!isHistory && (onDeleteCache || onUpdateCache) && (
+          <div className="absolute top-4 right-4 z-20 flex gap-1.5">
+            {onUpdateCache && (
+              <button onClick={() => { setEditData({ word_info: data.word_info, examples: data.examples ?? [] }); setEditOpen(true) }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white/80 hover:text-white text-xs font-medium transition-all backdrop-blur-sm">
+                <Pencil className="size-3" />수정
+              </button>
+            )}
+            {onDeleteCache && (
+              <button onClick={handleDelete} disabled={deleting}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white/80 hover:text-white text-xs font-medium transition-all backdrop-blur-sm disabled:opacity-50">
+                <RefreshCw className={`size-3 ${deleting ? "animate-spin" : ""}`} />재분석
+              </button>
+            )}
+          </div>
+        )}
 
         <div className="relative z-10 flex flex-col gap-8">
           <div className="space-y-4">

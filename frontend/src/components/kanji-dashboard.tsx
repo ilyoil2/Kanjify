@@ -200,6 +200,24 @@ export default function KanjiDashboard({ user, onLogout, currentPath, navigateTo
     setTimeout(() => handleKanjiSubmit(word, true), 100)
   }
 
+  const handleDeleteCache = async (word: string) => {
+    try {
+      await fetch(`http://localhost:8002/api/word-cache/?word=${encodeURIComponent(word)}`, { method: 'DELETE' })
+    } catch {}
+    handleKanjiSubmit(word, true)
+  }
+
+  const handleUpdateCache = async (word: string, updates: { word_info?: Partial<KanjiRecursiveData['word_info']>, examples?: KanjiRecursiveData['examples'] }) => {
+    const response = await fetch(`http://localhost:8002/api/word-cache/?word=${encodeURIComponent(word)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates),
+    })
+    if (!response.ok) throw new Error('수정 실패')
+    const updated = await response.json()
+    setCurrentResult(prev => prev ? { ...prev, data: updated } : null)
+  }
+
   useEffect(() => {
     setHistoryAnalysisResult(null)
   }, [activeTab])
@@ -346,7 +364,12 @@ export default function KanjiDashboard({ user, onLogout, currentPath, navigateTo
                       </motion.div>
                     ) : currentResult ? (
                       <div key="result">
-                        <KanjiRecursiveResult data={currentResult.data} word={currentResult.word} />
+                        <KanjiRecursiveResult
+                          data={currentResult.data}
+                          word={currentResult.word}
+                          onDeleteCache={() => handleDeleteCache(currentResult.word)}
+                          onUpdateCache={(updates) => handleUpdateCache(currentResult.word, updates)}
+                        />
                       </div>
                     ) : (
                       <div key="empty" className="grid grid-cols-1 md:grid-cols-3 gap-6">

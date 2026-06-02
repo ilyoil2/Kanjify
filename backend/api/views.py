@@ -218,6 +218,31 @@ def save_analysis_to_db(word_text, result, user_email=None):
     except Exception as e:
         logger.error(f"Error saving to DB: {e}")
 
+@api_view(['DELETE', 'PATCH'])
+def word_cache_view(request):
+    word = request.query_params.get('word')
+    if not word:
+        return Response({"error": "word is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+    cached = Word.objects.filter(input_text=word).first()
+    if not cached:
+        return Response({"error": "캐시가 없습니다."}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'DELETE':
+        cached.delete()
+        return Response({"message": "캐시가 삭제됐습니다."})
+
+    # PATCH: word_info / examples 부분 업데이트
+    result = dict(cached.result_data)
+    if 'word_info' in request.data:
+        result['word_info'] = {**result.get('word_info', {}), **request.data['word_info']}
+    if 'examples' in request.data:
+        result['examples'] = request.data['examples']
+    cached.result_data = result
+    cached.save()
+    return Response(result)
+
+
 @api_view(['POST'])
 def analyze_kanji_view(request):
     try:
