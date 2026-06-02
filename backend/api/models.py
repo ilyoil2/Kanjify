@@ -1,38 +1,21 @@
 from django.db import models
 
 class Vocabulary(models.Model):
-    class NLevel(models.TextChoices):
-        N1 = 'N1', 'N1'
-        N2 = 'N2', 'N2'
-        N3 = 'N3', 'N3'
-        N4 = 'N4', 'N4'
-        N5 = 'N5', 'N5'
-
-    class MemorizeStatus(models.TextChoices):
-        NOT_STARTED = 'NOT_STARTED', 'Not Started'
-        LEARNING = 'LEARNING', 'Learning'
-        MASTERED = 'MASTERED', 'Mastered'
-
-    kanji = models.CharField(max_length=100)
-    reading = models.CharField(max_length=200, null=True, blank=True)
-    meaning_ko = models.TextField(null=True, blank=True)
-    meaning_en = models.TextField(null=True, blank=True)
-    n_level = models.CharField(
-        max_length=2,
-        choices=NLevel.choices,
-        null=True,
-        blank=True,
-    )
-    memorize_status = models.CharField(
-        max_length=20,
-        choices=MemorizeStatus.choices,
-        default=MemorizeStatus.NOT_STARTED
-    )
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    word = models.TextField()
+    korean_reading_detail = models.TextField(null=True, blank=True)
+    korean_reading = models.TextField(null=True, blank=True)
+    radical_desc_ko = models.TextField(null=True, blank=True)
+    etymology = models.TextField(null=True, blank=True)
+    stroke_count_ko = models.TextField(null=True, blank=True)
+    radical_ja = models.TextField(null=True, blank=True)
+    stroke_count_ja = models.TextField(null=True, blank=True)
+    onyomi = models.TextField(null=True, blank=True)
+    kunyomi = models.TextField(null=True, blank=True)
+    meaning_ja = models.TextField(null=True, blank=True)
+    level = models.TextField(null=True, blank=True)
 
     def __str__(self):
-        return f"{self.kanji} ({self.reading})"
+        return self.word
 
     class Meta:
         db_table = 'tbl_vocabulary'
@@ -100,3 +83,23 @@ class WordStatus(models.Model):
 
     class Meta:
         db_table = 'tbl_word_status'
+
+class Kanji(models.Model):
+    kanji = models.CharField(max_length=10)
+    korean_reading_detail = models.TextField(null=True, blank=True)
+    korean_reading = models.TextField(null=True, blank=True)
+    radical_desc_ko = models.TextField(null=True, blank=True)
+    etymology = models.TextField(null=True, blank=True)
+    stroke_count_ko = models.TextField(null=True, blank=True)
+    radical_ja = models.TextField(null=True, blank=True)
+    stroke_count_ja = models.TextField(null=True, blank=True)
+    onyomi = models.TextField(null=True, blank=True)
+    kunyomi = models.TextField(null=True, blank=True)
+    meaning_ja = models.TextField(null=True, blank=True)
+    level = models.TextField(null=True, blank=True)
+
+    def __str__(self):
+        return self.kanji
+
+    class Meta:
+        db_table = 'tbl_kanji'
