@@ -11,3 +11,4 @@ Kanjify monorepo
 - Vite web server: http://localhost:3002
 
 Stop both servers with `Ctrl-C`.
+lsof -ti TCP:8002,3002 | xargs kill -9
